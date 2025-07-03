@@ -155,19 +155,83 @@ header .title {
 
 .version-display {
   background: transparent;
-  border: 2px solid var(--primary-glow);
+  border: 1px solid var(--primary-glow);
   color: var(--primary-glow);
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
   display: flex;
   align-items: center;
-  gap: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.version-display:hover {
+  background: var(--primary-glow);
+  color: var(--bg-dark);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
 .version-text {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
+}
+
+.version-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--panel-bg);
+  border: 2px solid var(--primary-glow);
+  border-radius: 6px;
+  padding: 0.5rem;
+  min-width: 150px;
+  display: none;
+  z-index: 1000;
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.version-dropdown.show {
+  display: block;
+  animation: slideDown 0.3s ease-out;
+}
+
+.version-option {
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.version-option:hover {
+  background: var(--hover-bg);
+}
+
+.version-option.active {
+  background: var(--primary-glow);
+  color: var(--bg-dark);
+}
+
+.version-badge {
+  font-size: 0.6rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+.version-badge.current {
+  background: var(--success-color);
+  color: var(--bg-dark);
+}
+
+.version-badge.beta {
+  background: var(--warning-color);
+  color: var(--bg-dark);
 }
 
 header button {
@@ -439,65 +503,30 @@ main.canvas {
   position: relative;
   background: linear-gradient(135deg, var(--bg-dark) 0%, var(--panel-bg) 100%);
   overflow: hidden;
-  margin: 1rem;
-  border-radius: 12px;
+  border: 3px solid var(--primary-glow);
   box-shadow: 0 0 30px var(--shadow-glow);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.canvas-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  padding: 20px;
-}
-
-.canvas-inner {
-  position: relative;
-  background: var(--bg-dark);
-  border: 3px solid var(--primary-glow);
-  border-radius: 8px;
-  cursor: default;
-  overflow: hidden;
-  box-shadow: 0 0 20px var(--shadow-glow);
+  padding: 10px;
 }
 
 #glcanvas {
-  width: 100%;
-  height: 100%;
-  border-radius: 5px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  border-radius: 8px;
   display: block;
-}
-
-.canvas-info {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(27, 27, 35, 0.9);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  color: var(--accent-color);
-  z-index: 100;
-  display: flex;
-  gap: 15px;
-  border: 1px solid var(--border-color);
-  backdrop-filter: blur(10px);
-}
-
-.canvas-info span {
-  font-weight: 600;
+  max-width: calc(100% - 20px);
+  max-height: calc(100% - 20px);
+  object-fit: contain;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
 }
 
 .canvas-ratio-indicator {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 15px;
+  right: 15px;
   background: rgba(27, 27, 35, 0.9);
   padding: 4px 8px;
   border-radius: 4px;
@@ -506,6 +535,7 @@ main.canvas {
   border: 1px solid var(--primary-glow);
   font-weight: 600;
   backdrop-filter: blur(10px);
+  z-index: 100;
 }
 
 /* === PROPERTIES PANEL === */
@@ -799,9 +829,18 @@ aside.properties h2 {
        <span class="logo-letter">i</span>
        <span class="logo-letter">t</span>
      </div>
-     <div class="version-display">
-       <span>📋</span>
-       <span class="version-text">v0.1</span>
+     <div class="version-display" id="version-display">
+       <span class="version-text" id="version-text">v0.1</span>
+       <div class="version-dropdown" id="version-dropdown">
+         <div class="version-option active" data-version="v0.1">
+           <span>v0.1</span>
+           <span class="version-badge current">CURRENT</span>
+         </div>
+         <div class="version-option" data-version="v1.0">
+           <span>v1.0</span>
+           <span class="version-badge beta">BETA</span>
+         </div>
+       </div>
      </div>
    </div>
    <button id="btn-export" title="Export Project">📤 Export</button>
@@ -958,18 +997,10 @@ aside.properties h2 {
  </div>
 
  <!-- MAIN CANVAS -->
- <main class="canvas" tabindex="0" aria-label="Editing Canvas">
-   <div class="canvas-container">
-     <div class="canvas-inner" id="canvas-inner">
-       <div class="canvas-info">
-         <span id="canvas-size-display">1080 × 1080 (1:1)</span>
-         <span id="canvas-zoom-display">100%</span>
-       </div>
-       <div class="canvas-ratio-indicator" id="canvas-ratio-indicator">1:1</div>
-       <canvas id="glcanvas"></canvas>
-     </div>
-   </div>
- </main>
+ <main class="canvas" tabindex="0" aria-label="Editing Canvas" id="canvas-main">
+  <div class="canvas-ratio-indicator" id="canvas-ratio-indicator">1:1</div>
+  <canvas id="glcanvas"></canvas>
+</main>
 
  <!-- PROPERTIES PANEL -->
  <aside class="properties" aria-label="Properties Panel">
@@ -992,6 +1023,14 @@ aside.properties h2 {
    </div>
 
    <h2>View Controls</h2>
+   <div class="property-line">
+  <label>Canvas Size</label>
+  <div id="canvas-size-display" style="color: var(--accent-color); font-weight: 600;">1080 × 1080 (1:1)</div>
+</div>
+<div class="property-line">
+  <label>Canvas Zoom</label>
+  <div id="canvas-zoom-display" style="color: var(--accent-color); font-weight: 600;">100%</div>
+</div>
    <div class="property-buttons">
      <button class="property-btn" id="zoom-out" title="Zoom Out">− Zoom Out</button>
      <button class="property-btn" id="zoom-in" title="Zoom In">+ Zoom In</button>
@@ -1131,10 +1170,10 @@ const objects = [];
 let elementCounter = 0;
 let history = [];
 let historyIndex = -1;
+let currentVersion = 'v0.1';
 
 // === UI GLOBALS ===
 const canvas = document.getElementById('glcanvas');
-const canvasInner = document.getElementById('canvas-inner');
 const addTextBtn = document.getElementById('add-text');
 const addShapeBtn = document.getElementById('add-shape');
 const addImageBtn = document.getElementById('add-image');
@@ -1214,6 +1253,11 @@ const canvasBackgroundInput = document.getElementById('canvas-background');
 const canvasSizeDisplay = document.getElementById('canvas-size-display');
 const canvasZoomDisplay = document.getElementById('canvas-zoom-display');
 const canvasRatioIndicator = document.getElementById('canvas-ratio-indicator');
+
+// Version controls
+const versionDisplay = document.getElementById('version-display');
+const versionDropdown = document.getElementById('version-dropdown');
+const versionText = document.getElementById('version-text');
 
 // Export modal elements
 const exportModal = document.getElementById('export-modal');
@@ -1407,6 +1451,54 @@ class ObjectAnimator {
   }
 }
 
+// === VERSION MANAGEMENT ===
+function switchVersion(version) {
+  currentVersion = version;
+  versionText.textContent = version;
+  
+  // Update active state
+  document.querySelectorAll('.version-option').forEach(option => {
+    option.classList.remove('active');
+    if (option.dataset.version === version) {
+      option.classList.add('active');
+    }
+  });
+
+  // Show notification based on version
+  if (version === 'v1.0') {
+    showNotification('Switched to v1.0 Beta - Advanced tools coming soon!', 'success');
+    // Enable/disable features based on version
+    enableBetaFeatures();
+  } else {
+    showNotification('Switched to v0.1 - Current stable version', 'success');
+    disableBetaFeatures();
+  }
+  
+  versionDropdown.classList.remove('show');
+}
+
+function enableBetaFeatures() {
+  // Enable beta features for v1.0
+  const betaButtons = document.querySelectorAll('[disabled]');
+  betaButtons.forEach(btn => {
+    if (btn.title && btn.title.includes('Beta')) {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+}
+
+function disableBetaFeatures() {
+  // Disable beta features for v0.1
+  const betaButtons = document.querySelectorAll('.control-btn');
+  betaButtons.forEach(btn => {
+    if (btn.title && btn.title.includes('Beta')) {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    }
+  });
+}
+
 // === INITIALIZATION ===
 init();
 animate();
@@ -1414,6 +1506,14 @@ animate();
 // Initialize logo animator and object animator
 const logoAnimator = new LogoAnimator();
 const objectAnimator = new ObjectAnimator();
+
+// === DRAG SYSTEM ===
+let isDragging = false;
+let dragObject = null;
+let dragStartMouse = new THREE.Vector2();
+let dragStartPosition = new THREE.Vector3();
+let dragPlane = new THREE.Plane();
+let dragIntersection = new THREE.Vector3();
 
 function init() {
   // Setup Three.js renderer
@@ -1429,8 +1529,11 @@ function init() {
   camera = new THREE.PerspectiveCamera(70, 1, 0.1, 1000);
   camera.position.z = 3;
 
-  // Event listeners
-  canvas.addEventListener('mousedown', onCanvasClick);
+  // Event listeners for drag system
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('mouseleave', onMouseUp); // Stop dragging if mouse leaves canvas
   window.addEventListener('resize', onWindowResize);
 
   // Initialize canvas size
@@ -1447,11 +1550,7 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-function onWindowResize() {
-  updateCanvasSize(currentCanvasWidth, currentCanvasHeight);
-}
-
-function onCanvasClick(e) {
+function onMouseDown(e) {
   const rect = renderer.domElement.getBoundingClientRect();
   const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
   const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1463,10 +1562,88 @@ function onCanvasClick(e) {
   const intersects = raycaster.intersectObjects(objects);
 
   if (intersects.length > 0) {
-    selectElement(intersects[0].object);
+    const clickedObject = intersects[0].object;
+    
+    // Select the object
+    selectElement(clickedObject);
+    
+    // Start dragging
+    isDragging = true;
+    dragObject = clickedObject;
+    dragStartMouse.copy(mouse);
+    dragStartPosition.copy(clickedObject.position);
+    
+    // Create a drag plane perpendicular to camera
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    dragPlane.setFromNormalAndCoplanarPoint(cameraDirection, clickedObject.position);
+    
+    // Change cursor to indicate dragging
+    canvas.style.cursor = 'grabbing';
+    
+    // Stop any active animations on the object being dragged
+    objectAnimator.stopAnimation(dragObject);
+    
   } else {
+    // Clicked on empty space - deselect
     selectElement(null);
+    isDragging = false;
+    dragObject = null;
   }
+}
+
+function onMouseMove(e) {
+  if (!isDragging || !dragObject) {
+    // Update cursor based on hover
+    const rect = renderer.domElement.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    const mouse = new THREE.Vector2(x, y);
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(objects);
+    canvas.style.cursor = intersects.length > 0 ? 'grab' : 'default';
+    return;
+  }
+
+  // Calculate mouse movement
+  const rect = renderer.domElement.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  const currentMouse = new THREE.Vector2(x, y);
+  
+  // Calculate new position using raycasting on the drag plane
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(currentMouse, camera);
+  
+  if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+    // Update object position
+    dragObject.position.copy(dragIntersection);
+    
+    // Update properties panel if this object is selected
+    if (selected === dragObject) {
+      updateProperties();
+    }
+  }
+}
+
+function onMouseUp(e) {
+  if (isDragging && dragObject) {
+    // Save state after dragging
+    saveState();
+    showNotification(`${dragObject.userData.type} moved`, 'success');
+  }
+  
+  isDragging = false;
+  dragObject = null;
+  canvas.style.cursor = 'default';
+}
+
+function onWindowResize() {
+  updateCanvasSize(currentCanvasWidth, currentCanvasHeight);
 }
 
 // === UTILITY FUNCTIONS ===
@@ -1895,12 +2072,7 @@ function updateImageProperties() {
   const opt = selected.userData.options;
   opt.brightness = parseInt(propImageBrightness.value);
   opt.contrast = parseInt(propImageContrast.value);
-  opt.saturation = parseInt(propImageSaturation.value);
-
-  // Apply filters to material
-  const brightness = opt.brightness / 100;
-  const contrast = opt.contrast / 100;
-  selected.material.color.setRGB(brightness * contrast, brightness * contrast, brightness * contrast);
+  selected.material.color.setRGB(brightness, contrast, contrast);
 }
 
 function updateShapeProperties() {
@@ -1922,21 +2094,18 @@ function updateCanvasSize(width, height) {
   exportHeight.value = height;
 
   // Calculate scale to fit in viewport with exact ratio
-  const container = canvasInner.parentElement;
-  const containerWidth = container.clientWidth - 40; // Account for padding
-  const containerHeight = container.clientHeight - 40; // Account for padding
+  const mainCanvas = document.getElementById('canvas-main');
+  const containerWidth = mainCanvas.clientWidth - 26; // Account for padding and border
+  const containerHeight = mainCanvas.clientHeight - 26; // Account for padding and border
 
   const scaleX = containerWidth / width;
   const scaleY = containerHeight / height;
   canvasScale = Math.min(scaleX, scaleY, 1);
 
-  // Update canvas inner size to exact ratio
+  // Update canvas size to maintain aspect ratio
   const displayWidth = width * canvasScale;
   const displayHeight = height * canvasScale;
   
-  canvasInner.style.width = displayWidth + 'px';
-  canvasInner.style.height = displayHeight + 'px';
-
   // Update renderer size
   renderer.setSize(displayWidth, displayHeight);
   camera.aspect = width / height;
@@ -2140,6 +2309,18 @@ function deleteObject() {
 
 // === EVENT LISTENERS ===
 
+// Version dropdown
+versionDisplay.addEventListener('click', (e) => {
+  e.stopPropagation();
+  versionDropdown.classList.toggle('show');
+});
+
+document.querySelectorAll('.version-option').forEach(option => {
+  option.addEventListener('click', () => {
+    switchVersion(option.dataset.version);
+  });
+});
+
 // User profile dropdown
 userProfile.addEventListener('click', (e) => {
   e.stopPropagation();
@@ -2148,6 +2329,7 @@ userProfile.addEventListener('click', (e) => {
 
 document.addEventListener('click', () => {
   profileDropdown.classList.remove('show');
+  versionDropdown.classList.remove('show');
 });
 
 // Export modal
@@ -2343,7 +2525,7 @@ document.getElementById('btn-new').addEventListener('click', () => {
 
 document.getElementById('btn-save').addEventListener('click', () => {
   const projectData = {
-    version: 'v0.1',
+    version: currentVersion,
     objects: objects.map(obj => ({
       id: obj.userData.id,
       type: obj.userData.type,
