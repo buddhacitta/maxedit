@@ -1,0 +1,2935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>maxEdit v1.0 - Advanced 3D Web Editor</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap');
+
+        /* === THEMES === */
+        :root {
+            --bg-dark: #121214;
+            --primary-glow: #00f0ff;
+            --accent-color: #0ff;
+            --text-light: #eee;
+            --panel-bg: #1b1b23;
+            --shadow-glow: rgba(0, 255, 255, 0.25);
+            --font-family: 'Orbitron', sans-serif;
+            --border-color: #333;
+            --hover-bg: rgba(0, 255, 255, 0.1);
+            --success-color: #00ff88;
+            --warning-color: #ffaa00;
+            --error-color: #ff4444;
+            --beta-gradient: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+        }
+
+        /* === BASE STYLES === */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: var(--font-family);
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            grid-template-rows: 60px 60px 1fr;
+            grid-template-areas:
+                "topbar topbar"
+                "controls controls"
+                "canvas properties";
+            overflow: hidden;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                grid-template-columns: 1fr 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 60px 1fr 200px;
+                grid-template-areas:
+                    "topbar"
+                    "controls"
+                    "canvas"
+                    "properties";
+            }
+        }
+
+        button, input, select {
+            font-family: var(--font-family);
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        /* === TOPBAR === */
+        header {
+            grid-area: topbar;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 1rem;
+            color: var(--primary-glow);
+            text-shadow: 0 0 8px var(--primary-glow);
+            font-weight: 600;
+            font-size: 1.3rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        header .title {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: var(--beta-gradient);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: infinityColors 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+        }
+
+        @keyframes infinityColors {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .version-display {
+            background: transparent;
+            border: 1px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .version-display:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .version-display.v1 {
+            background: var(--beta-gradient);
+            color: var(--bg-dark);
+            font-weight: bold;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .version-text {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .version-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-glow);
+            border-radius: 6px;
+            padding: 0.5rem;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .version-dropdown.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .version-option {
+            padding: 0.3rem 0.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .version-option:hover {
+            background: var(--hover-bg);
+        }
+
+        .version-option.active {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+        }
+
+        .version-badge {
+            font-size: 0.6rem;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .version-badge.current {
+            background: var(--success-color);
+            color: var(--bg-dark);
+        }
+
+        .version-badge.beta {
+            background: var(--warning-color);
+            color: var(--bg-dark);
+        }
+
+        header button {
+            background: transparent;
+            border: 2px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        header button:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        header button:active {
+            transform: translateY(0);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-glow);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-size: 0.8rem;
+        }
+
+        .user-profile:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .beta-badge {
+            background: var(--warning-color);
+            color: var(--bg-dark);
+            padding: 2px 4px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: bold;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-glow);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .profile-dropdown.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* === CONTROLS BAR === */
+        .controls-bar {
+            grid-area: controls;
+            background: var(--panel-bg);
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 0.6rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+            overflow-y: hidden;
+            height: 100%;
+            min-height: 60px;
+            max-height: 60px;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: 1px solid var(--primary-glow);
+            color: var(--accent-color);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            min-width: fit-content;
+        }
+
+        .control-btn:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            transform: translateY(-1px);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .control-btn:disabled:hover {
+            background: transparent;
+            color: var(--accent-color);
+            transform: none;
+        }
+
+        .control-btn.beta-enabled {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+            background: rgba(255, 170, 0, 0.1);
+        }
+
+        .control-btn.beta-enabled:hover {
+            background: var(--warning-color);
+            color: var(--bg-dark);
+        }
+
+        .preset-selector {
+            background: var(--panel-bg);
+            border: 1px solid var(--primary-glow);
+            color: var(--accent-color);
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .preset-selector:focus {
+            outline: none;
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        /* === EXPORT MODAL === */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            margin: 10% auto;
+            padding: 2rem;
+            border: 2px solid var(--primary-glow);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px var(--primary-glow);
+        }
+
+        .modal h2 {
+            color: var(--primary-glow);
+            margin-top: 0;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: var(--accent-color);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .close:hover {
+            color: var(--primary-glow);
+        }
+
+        .export-options {
+            display: grid;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .export-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .export-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .export-group label {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .export-group select,
+        .export-group input {
+            background: var(--bg-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-light);
+            padding: 8px 12px;
+            font-family: var(--font-family);
+            transition: all 0.3s ease;
+        }
+
+        .export-group select:focus,
+        .export-group input:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .export-btn {
+            background: transparent;
+            border: 2px solid var(--primary-glow);
+            color: var(--primary-glow);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .export-btn:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            box-shadow: 0 0 20px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .export-btn.cancel {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .export-btn.cancel:hover {
+            background: var(--error-color);
+            color: var(--text-light);
+            box-shadow: 0 0 20px var(--error-color);
+        }
+
+        /* === CANVAS === */
+        main.canvas {
+            grid-area: canvas;
+            position: relative;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--panel-bg) 100%);
+            overflow: hidden;
+            border: 3px solid var(--primary-glow);
+            box-shadow: 0 0 30px var(--shadow-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        #glcanvas {
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            border-radius: 8px;
+            display: block;
+            max-width: calc(100% - 20px);
+            max-height: calc(100% - 20px);
+            object-fit: contain;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .canvas-ratio-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(27, 27, 35, 0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--primary-glow);
+            border: 1px solid var(--primary-glow);
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        /* === PROPERTIES PANEL === */
+        aside.properties {
+            grid-area: properties;
+            background: var(--panel-bg);
+            padding: 0;
+            border-left: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            font-size: 0.9rem;
+            overflow: hidden;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            height: 100%;
+        }
+
+        /* === SECTION TOGGLERS === */
+        .section-togglers {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            background: var(--bg-dark);
+        }
+
+        .section-toggle {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--accent-color);
+            padding: 12px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-bottom: 3px solid transparent;
+        }
+
+        .section-toggle:hover {
+            background: var(--hover-bg);
+            color: var(--primary-glow);
+        }
+
+        .section-toggle.active {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+            border-bottom-color: var(--primary-glow);
+        }
+
+        .section-toggle.beta-mode {
+            background: var(--beta-gradient);
+            color: var(--bg-dark);
+            font-weight: bold;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* === SECTION CONTENT === */
+        .section-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        .section-content h2 {
+            color: var(--primary-glow);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.8rem;
+            margin: 0 0 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        .section-content h3 {
+            color: var(--warning-color);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 1.5rem 0 0.8rem 0;
+            padding: 0.5rem;
+            background: rgba(255, 170, 0, 0.1);
+            border-left: 3px solid var(--warning-color);
+            border-radius: 4px;
+        }
+
+        .property-line {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.8rem;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .property-line label {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-align: right;
+        }
+
+        .property-line input,
+        .property-line select {
+            background: var(--bg-dark);
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-light);
+            padding: 6px 10px;
+            font-family: var(--font-family);
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .property-line input:focus,
+        .property-line select:focus {
+            outline: none;
+            border-color: var(--primary-glow);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .property-line input[type="range"] {
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border-color);
+            cursor: pointer;
+        }
+
+        .property-line input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary-glow);
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--primary-glow);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .property-line input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .property-line input[type="color"] {
+            width: 40px;
+            height: 30px;
+            padding: 2px;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .property-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .property-btn {
+            background: transparent;
+            border: 1px solid var(--primary-glow);
+            color: var(--accent-color);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .property-btn:hover {
+            background: var(--primary-glow);
+            color: var(--bg-dark);
+        }
+
+        .property-btn.beta {
+            border-color: var(--warning-color);
+            color: var(--warning-color);
+            background: rgba(255, 170, 0, 0.1);
+        }
+
+        .property-btn.beta:hover {
+            background: var(--warning-color);
+            color: var(--bg-dark);
+        }
+
+        .property-btn.danger {
+            border-color: var(--error-color);
+            color: var(--error-color);
+        }
+
+        .property-btn.danger:hover {
+            background: var(--error-color);
+            color: var(--text-light);
+        }
+
+        /* === BETA FEATURES === */
+        .beta-feature {
+            opacity: 0.5;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .beta-feature.enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .beta-indicator {
+            display: inline-block;
+            background: var(--warning-color);
+            color: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            margin-left: 8px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* === NOTIFICATIONS === */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-glow);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            color: var(--text-light);
+            box-shadow: 0 0 20px var(--primary-glow);
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: var(--success-color);
+            box-shadow: 0 0 20px var(--success-color);
+        }
+
+        .notification.error {
+            border-color: var(--error-color);
+            box-shadow: 0 0 20px var(--error-color);
+        }
+
+        /* === LOADING SPINNER === */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10000;
+            color: var(--primary-glow);
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-glow);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .controls-bar {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+                padding: 0.5rem;
+            }
+            .property-line {
+                grid-template-columns: 1fr;
+                gap: 0.3rem;
+            }
+            .property-line label {
+                text-align: left;
+            }
+            .section-toggle {
+                font-size: 0.65rem;
+                padding: 10px 6px;
+            }
+        }
+
+        /* === ACCESSIBILITY === */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* === CUSTOM SCROLLBAR === */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-glow);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: var(--bg-dark);
+        }
+
+        /* Firefox scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-glow) var(--bg-dark);
+        }
+    </style>
+</head>
+<body>
+    <!-- TOP BAR -->
+    <header>
+        <div class="title">
+            <div class="logo-text" id="logo-text">
+                <span class="logo-letter">m</span>
+                <span class="logo-letter">a</span>
+                <span class="logo-letter">x</span>
+                <span class="logo-letter">E</span>
+                <span class="logo-letter">d</span>
+                <span class="logo-letter">i</span>
+                <span class="logo-letter">t</span>
+            </div>
+            <div class="version-display" id="version-display">
+                <span class="version-text" id="version-text">v0.1</span>
+                <div class="version-dropdown" id="version-dropdown">
+                    <div class="version-option active" data-version="v0.1">
+                        <span>v0.1</span>
+                        <span class="version-badge current">CURRENT</span>
+                    </div>
+                    <div class="version-option" data-version="v1.0">
+                        <span>v1.0</span>
+                        <span class="version-badge beta">BETA</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="btn-export" title="Export Project">📤 Export</button>
+        <div class="user-profile" id="user-profile">
+            <span>👤 User</span>
+            <span class="beta-badge">BETA</span>
+            <div class="profile-dropdown" id="profile-dropdown">
+                <h3 style="margin-top: 0; color: var(--primary-glow);">Beta Profile</h3>
+                <p style="margin: 0.5rem 0; color: var(--accent-color);">✨ Unlimited Projects</p>
+                <p style="margin: 0.5rem 0; color: var(--accent-color);">🚀 Unlimited Exports</p>
+                <p style="margin: 0.5rem 0; color: var(--accent-color);">🎨 All Themes</p>
+                <p style="margin: 0.5rem 0; color: var(--accent-color);">⚡ Priority Support</p>
+                <p style="margin: 0.5rem 0; color: var(--warning-color);">🔥 v1.0 Beta Access</p>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                    <small style="color: var(--text-light); opacity: 0.7;">Beta Version - All features unlocked</small>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTROLS BAR -->
+    <div class="controls-bar">
+        <button class="control-btn" id="add-image" title="Add Image">🖼️ Image</button>
+        <input type="file" id="file-image" accept="image/*" style="display:none" />
+        <button class="control-btn beta-feature" id="add-video" title="Add Video (v1.0 Beta)">🎬 Video</button>
+        <input type="file" id="file-video" accept="video/*" style="display:none" />
+        <button class="control-btn" id="add-text" title="Add Text">📝 Text</button>
+        <button class="control-btn" id="add-shape" title="Add Circle">⭕ Circle</button>
+        <button class="control-btn" id="add-rectangle" title="Add Rectangle">⬜ Rectangle</button>
+        <button class="control-btn" id="add-cube" title="Add 3D Cube">🧊 Cube</button>
+        <button class="control-btn beta-feature" id="add-gradient" title="Add Gradient (v1.0 Beta)">🌈 Gradient</button>
+        <button class="control-btn beta-feature" id="btn-more" title="More Tools (v1.0 Beta)">⚙️ More</button>
+        
+        <select class="preset-selector" id="canvas-preset" title="Canvas Presets">
+            <option value="">📐 Canvas Presets</option>
+            <optgroup label="📺 Video Platforms">
+                <option value="youtube-thumbnail">YouTube Thumbnail (1280×720)</option>
+                <option value="youtube-banner">YouTube Banner (2560×1440)</option>
+                <option value="youtube-shorts">YouTube Shorts (1080×1920)</option>
+                <option value="tiktok-video">TikTok Video (1080×1920)</option>
+                <option value="tiktok-profile">TikTok Profile (200×200)</option>
+            </optgroup>
+            <optgroup label="📷 Instagram">
+                <option value="instagram-post">Instagram Post (1080×1080)</option>
+                <option value="instagram-story">Instagram Story (1080×1920)</option>
+                <option value="instagram-reel">Instagram Reel (1080×1920)</option>
+                <option value="instagram-profile">Instagram Profile (320×320)</option>
+                <option value="instagram-highlight">Instagram Highlight (1080×1920)</option>
+            </optgroup>
+            <optgroup label="👥 Facebook">
+                <option value="facebook-post">Facebook Post (1200×630)</option>
+                <option value="facebook-cover">Facebook Cover (1640×859)</option>
+                <option value="facebook-profile">Facebook Profile (170×170)</option>
+                <option value="facebook-event">Facebook Event (1920×1080)</option>
+                <option value="facebook-ad">Facebook Ad (1200×628)</option>
+            </optgroup>
+            <optgroup label="🐦 Twitter/X">
+                <option value="twitter-post">Twitter Post (1200×675)</option>
+                <option value="twitter-header">Twitter Header (1500×500)</option>
+                <option value="twitter-profile">Twitter Profile (400×400)</option>
+                <option value="twitter-card">Twitter Card (1200×628)</option>
+            </optgroup>
+            <optgroup label="💼 LinkedIn">
+                <option value="linkedin-post">LinkedIn Post (1200×627)</option>
+                <option value="linkedin-cover">LinkedIn Cover (1584×396)</option>
+                <option value="linkedin-profile">LinkedIn Profile (400×400)</option>
+                <option value="linkedin-company">LinkedIn Company (1536×768)</option>
+            </optgroup>
+            <optgroup label="📌 Pinterest">
+                <option value="pinterest-pin">Pinterest Pin (1000×1500)</option>
+                <option value="pinterest-board">Pinterest Board (222×150)</option>
+                <option value="pinterest-profile">Pinterest Profile (165×165)</option>
+            </optgroup>
+            <optgroup label="👻 Snapchat">
+                <option value="snapchat-ad">Snapchat Ad (1080×1920)</option>
+                <option value="snapchat-geofilter">Snapchat Geofilter (1080×1920)</option>
+            </optgroup>
+            <optgroup label="🎵 Music Platforms">
+                <option value="spotify-cover">Spotify Cover (640×640)</option>
+                <option value="soundcloud-cover">SoundCloud Cover (800×800)</option>
+                <option value="apple-music">Apple Music Cover (1400×1400)</option>
+            </optgroup>
+            <optgroup label="🖥️ Desktop & Web">
+                <option value="desktop-wallpaper">Desktop Wallpaper (1920×1080)</option>
+                <option value="desktop-4k">Desktop 4K (3840×2160)</option>
+                <option value="web-banner">Web Banner (728×90)</option>
+                <option value="web-header">Web Header (1920×400)</option>
+            </optgroup>
+            <optgroup label="📱 Mobile">
+                <option value="mobile-wallpaper">Mobile Wallpaper (1080×1920)</option>
+                <option value="iphone-wallpaper">iPhone Wallpaper (1170×2532)</option>
+                <option value="android-wallpaper">Android Wallpaper (1080×1920)</option>
+            </optgroup>
+            <optgroup label="📄 Print & Documents">
+                <option value="a4-portrait">A4 Portrait (2480×3508)</option>
+                <option value="a4-landscape">A4 Landscape (3508×2480)</option>
+                <option value="business-card">Business Card (1050×600)</option>
+                <option value="poster-small">Small Poster (2480×3508)</option>
+                <option value="poster-large">Large Poster (4961×7016)</option>
+            </optgroup>
+        </select>
+        
+        <button class="control-btn" id="btn-undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button class="control-btn" id="btn-redo" title="Redo (Ctrl+Y)">↷ Redo</button>
+        <button class="control-btn" id="btn-new" title="New Project">🗎 New</button>
+        <button class="control-btn" id="btn-save" title="Save Project">💾 Save</button>
+    </div>
+
+    <!-- EXPORT MODAL -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <h2>Export Settings</h2>
+            <div class="export-options">
+                <div class="export-row">
+                    <div class="export-group">
+                        <label for="export-format">Format</label>
+                        <select id="export-format">
+                            <option value="png">PNG</option>
+                            <option value="jpg">JPEG</option>
+                            <option value="webp">WebP</option>
+                            <option value="mp4" class="beta-feature">MP4 (v1.0 Beta)</option>
+                            <option value="gif" class="beta-feature">GIF (v1.0 Beta)</option>
+                        </select>
+                    </div>
+                    <div class="export-group">
+                        <label for="export-quality">Quality</label>
+                        <select id="export-quality">
+                            <option value="1">Standard (1x)</option>
+                            <option value="2">High (2x)</option>
+                            <option value="3">Ultra (3x)</option>
+                            <option value="4">Maximum (4x)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="export-row">
+                    <div class="export-group">
+                        <label for="export-width">Width (px)</label>
+                        <input type="number" id="export-width" min="100" max="8000" value="1080">
+                    </div>
+                    <div class="export-group">
+                        <label for="export-height">Height (px)</label>
+                        <input type="number" id="export-height" min="100" max="8000" value="1080">
+                    </div>
+                </div>
+                <div class="export-group">
+                    <label for="export-filename">Filename</label>
+                    <input type="text" id="export-filename" value="maxEdit-export" placeholder="Enter filename">
+                </div>
+            </div>
+            <div class="export-buttons">
+                <button class="export-btn cancel" id="cancel-export">Cancel</button>
+                <button class="export-btn" id="confirm-export">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CANVAS -->
+    <main class="canvas" tabindex="0" aria-label="Editing Canvas" id="canvas-main">
+        <div class="canvas-ratio-indicator" id="canvas-ratio-indicator">1:1</div>
+        <canvas id="glcanvas"></canvas>
+    </main>
+
+    <!-- PROPERTIES PANEL -->
+    <aside class="properties" aria-label="Properties Panel">
+        <!-- Section Togglers -->
+        <div class="section-togglers">
+            <button class="section-toggle active" data-section="canvas">Canvas</button>
+            <button class="section-toggle" data-section="basic">Basic</button>
+            <button class="section-toggle beta-feature" data-section="advanced">Advanced<span class="beta-indicator">v1.0</span></button>
+        </div>
+
+        <!-- Canvas Settings Section -->
+        <div class="section-content active" id="canvas-section">
+            <h2>Canvas Settings</h2>
+            <div class="property-line">
+                <label for="canvas-width">Width</label>
+                <input type="number" id="canvas-width" min="100" max="8000" value="1080" />
+            </div>
+            <div class="property-line">
+                <label for="canvas-height">Height</label>
+                <input type="number" id="canvas-height" min="100" max="8000" value="1080" />
+            </div>
+            <div class="property-line">
+                <label for="canvas-background">Background</label>
+                <input type="color" id="canvas-background" value="#14141a" />
+            </div>
+            <div class="property-buttons">
+                <button class="property-btn" id="center-content">Center All</button>
+                <button class="property-btn" id="fit-content">Fit Content</button>
+            </div>
+        </div>
+
+        <!-- Basic Edit Section -->
+        <div class="section-content" id="basic-section">
+            <h2>Element Properties</h2>
+            <div class="property-line">
+                <label for="prop-name">Name</label>
+                <input type="text" id="prop-name" placeholder="Element name" />
+            </div>
+            <div class="property-line">
+                <label for="prop-x">X Position</label>
+                <input type="range" id="prop-x" min="-5" max="5" step="0.01" value="0" />
+            </div>
+            <div class="property-line">
+                <label for="prop-y">Y Position</label>
+                <input type="range" id="prop-y" min="-5" max="5" step="0.01" value="0" />
+            </div>
+            <div class="property-line">
+                <label for="prop-z">Z Position</label>
+                <input type="range" id="prop-z" min="-5" max="5" step="0.01" value="0" />
+            </div>
+            <div class="property-line">
+                <label for="prop-scale">Scale</label>
+                <input type="range" id="prop-scale" min="0.1" max="3" step="0.01" value="1" />
+            </div>
+            <div class="property-line">
+                <label for="prop-opacity">Opacity</label>
+                <input type="range" id="prop-opacity" min="0" max="100" step="1" value="100" />
+            </div>
+            <div class="property-line" id="text-content-line" style="display: none;">
+                <label for="prop-text">Text</label>
+                <input type="text" id="prop-text" />
+            </div>
+            <div class="property-line" id="text-size-line" style="display: none;">
+                <label for="prop-text-size">Font Size</label>
+                <input type="range" id="prop-text-size" min="10" max="100" step="1" value="32" />
+            </div>
+            <div class="property-line" id="main-color-line" style="display: none;">
+                <label for="prop-main-color">Color</label>
+                <input type="color" id="prop-main-color" value="#00ffff" />
+            </div>
+            <div class="property-line" id="bg-color-line" style="display: none;">
+                <label for="prop-bg-color">Background</label>
+                <input type="color" id="prop-bg-color" value="#000000" />
+            </div>
+            <div class="property-line" id="bg-none-line" style="display: none;">
+                <label></label>
+                <button class="property-btn" id="bg-none-btn">No Background</button>
+            </div>
+            <h2>Object Controls</h2>
+            <div class="property-buttons">
+                <button class="property-btn" id="duplicate-object">⧉ Duplicate</button>
+                <button class="property-btn danger" id="delete-object">🗑️ Delete</button>
+            </div>
+        </div>
+
+        <!-- Advanced Edit Section (v1.0 Beta) -->
+        <div class="section-content beta-feature" id="advanced-section">
+            <h2>Advanced Properties <span class="beta-indicator">v1.0 BETA</span></h2>
+            
+            <h3>🎨 Color Grading</h3>
+            <div class="property-line beta-feature">
+                <label for="prop-hue">Hue Shift</label>
+                <input type="range" id="prop-hue" min="-180" max="180" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-saturation">Saturation</label>
+                <input type="range" id="prop-saturation" min="0" max="200" step="1" value="100" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-brightness">Brightness</label>
+                <input type="range" id="prop-brightness" min="0" max="200" step="1" value="100" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-contrast">Contrast</label>
+                <input type="range" id="prop-contrast" min="0" max="200" step="1" value="100" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-gamma">Gamma</label>
+                <input type="range" id="prop-gamma" min="0.1" max="3" step="0.1" value="1" />
+            </div>
+
+            <h3>🔄 Transform</h3>
+            <div class="property-line">
+                <label for="prop-rotate-x">Rotate X</label>
+                <input type="range" id="prop-rotate-x" min="-180" max="180" step="1" value="0" />
+            </div>
+            <div class="property-line">
+                <label for="prop-rotate-y">Rotate Y</label>
+                <input type="range" id="prop-rotate-y" min="-180" max="180" step="1" value="0" />
+            </div>
+            <div class="property-line">
+                <label for="prop-rotate-z">Rotate Z</label>
+                <input type="range" id="prop-rotate-z" min="-180" max="180" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-skew-x">Skew X</label>
+                <input type="range" id="prop-skew-x" min="-45" max="45" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature">
+                <label for="prop-skew-y">Skew Y</label>
+                <input type="range" id="prop-skew-y" min="-45" max="45" step="1" value="0" />
+            </div>
+
+            <h3>📝 Typography (Text Only)</h3>
+            <div class="property-line" id="text-weight-line" style="display: none;">
+                <label for="prop-text-weight">Font Weight</label>
+                <select id="prop-text-weight">
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="lighter">Light</option>
+                </select>
+            </div>
+            <div class="property-line beta-feature" id="text-font-line" style="display: none;">
+                <label for="prop-text-font">Font Family</label>
+                <select id="prop-text-font">
+                    <option value="Arial">Arial</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times">Times</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Orbitron">Orbitron</option>
+                </select>
+            </div>
+            <div class="property-line beta-feature" id="text-spacing-line" style="display: none;">
+                <label for="prop-text-spacing">Letter Spacing</label>
+                <input type="range" id="prop-text-spacing" min="-5" max="20" step="0.5" value="0" />
+            </div>
+            <div class="property-line beta-feature" id="text-shadow-line" style="display: none;">
+                <label for="prop-text-shadow">Text Shadow</label>
+                <input type="range" id="prop-text-shadow" min="0" max="20" step="1" value="0" />
+            </div>
+
+            <h3>🎨 Advanced Styling</h3>
+            <div class="property-line" id="border-color-line" style="display: none;">
+                <label for="prop-border-color">Border Color</label>
+                <input type="color" id="prop-border-color" value="#ff0000" />
+            </div>
+            <div class="property-line" id="border-width-line" style="display: none;">
+                <label for="prop-border-width">Border Width</label>
+                <input type="range" id="prop-border-width" min="0" max="20" step="1" value="2" />
+            </div>
+            <div class="property-line" id="border-radius-line" style="display: none;">
+                <label for="prop-border-radius">Border Radius</label>
+                <input type="range" id="prop-border-radius" min="0" max="50" step="1" value="10" />
+            </div>
+            <div class="property-line" id="border-none-line" style="display: none;">
+                <label></label>
+                <button class="property-btn" id="border-none-btn">Remove Border</button>
+            </div>
+            <div class="property-line beta-feature" id="shadow-blur-line" style="display: none;">
+                <label for="prop-shadow-blur">Shadow Blur</label>
+                <input type="range" id="prop-shadow-blur" min="0" max="50" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature" id="shadow-color-line" style="display: none;">
+                <label for="prop-shadow-color">Shadow Color</label>
+                <input type="color" id="prop-shadow-color" value="#000000" />
+            </div>
+
+            <h3>🖼️ Image Effects</h3>
+            <div class="property-line beta-feature" id="image-blur-line" style="display: none;">
+                <label for="prop-image-blur">Blur</label>
+                <input type="range" id="prop-image-blur" min="0" max="20" step="0.5" value="0" />
+            </div>
+            <div class="property-line beta-feature" id="image-sepia-line" style="display: none;">
+                <label for="prop-image-sepia">Sepia</label>
+                <input type="range" id="prop-image-sepia" min="0" max="100" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature" id="image-invert-line" style="display: none;">
+                <label for="prop-image-invert">Invert</label>
+                <input type="range" id="prop-image-invert" min="0" max="100" step="1" value="0" />
+            </div>
+            <div class="property-line beta-feature" id="image-grayscale-line" style="display: none;">
+                <label for="prop-image-grayscale">Grayscale</label>
+                <input type="range" id="prop-image-grayscale" min="0" max="100" step="1" value="0" />
+            </div>
+
+            <h3>⚡ Advanced Actions</h3>
+            <div class="property-buttons">
+                <button class="property-btn beta" id="reset-filters">Reset Filters</button>
+                <button class="property-btn beta" id="apply-preset">Apply Preset</button>
+            </div>
+            <div class="property-buttons">
+                <button class="property-btn beta" id="copy-style">Copy Style</button>
+                <button class="property-btn beta" id="paste-style">Paste Style</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- LOADING INDICATOR -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Processing...</div>
+    </div>
+
+    <!-- NOTIFICATION CONTAINER -->
+    <div id="notification-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script>
+        // === THREE.JS GLOBALS ===
+        let scene, camera, renderer, selected = null;
+        const objects = [];
+        let elementCounter = 0;
+        let history = [];
+        let historyIndex = -1;
+        let currentVersion = 'v0.1';
+        let copiedStyle = null;
+
+        // === UI GLOBALS ===
+        const canvas = document.getElementById('glcanvas');
+        const addTextBtn = document.getElementById('add-text');
+        const addShapeBtn = document.getElementById('add-shape');
+        const addImageBtn = document.getElementById('add-image');
+        const addVideoBtn = document.getElementById('add-video');
+        const addRectangleBtn = document.getElementById('add-rectangle');
+        const addCubeBtn = document.getElementById('add-cube');
+        const addGradientBtn = document.getElementById('add-gradient');
+        const fileImageInput = document.getElementById('file-image');
+        const fileVideoInput = document.getElementById('file-video');
+
+        // Canvas ratio management
+        let currentCanvasWidth = 1080;
+        let currentCanvasHeight = 1080;
+        let canvasScale = 1;
+
+        const canvasPresets = {
+            // Video Platforms
+            'youtube-thumbnail': { width: 1280, height: 720, name: 'YouTube Thumbnail' },
+            'youtube-banner': { width: 2560, height: 1440, name: 'YouTube Banner' },
+            'youtube-shorts': { width: 1080, height: 1920, name: 'YouTube Shorts' },
+            'tiktok-video': { width: 1080, height: 1920, name: 'TikTok Video' },
+            'tiktok-profile': { width: 200, height: 200, name: 'TikTok Profile' },
+            // Instagram
+            'instagram-post': { width: 1080, height: 1080, name: 'Instagram Post' },
+            'instagram-story': { width: 1080, height: 1920, name: 'Instagram Story' },
+            'instagram-reel': { width: 1080, height: 1920, name: 'Instagram Reel' },
+            'instagram-profile': { width: 320, height: 320, name: 'Instagram Profile' },
+            'instagram-highlight': { width: 1080, height: 1920, name: 'Instagram Highlight' },
+            // Facebook
+            'facebook-post': { width: 1200, height: 630, name: 'Facebook Post' },
+            'facebook-cover': { width: 1640, height: 859, name: 'Facebook Cover' },
+            'facebook-profile': { width: 170, height: 170, name: 'Facebook Profile' },
+            'facebook-event': { width: 1920, height: 1080, name: 'Facebook Event' },
+            'facebook-ad': { width: 1200, height: 628, name: 'Facebook Ad' },
+            // Twitter/X
+            'twitter-post': { width: 1200, height: 675, name: 'Twitter Post' },
+            'twitter-header': { width: 1500, height: 500, name: 'Twitter Header' },
+            'twitter-profile': { width: 400, height: 400, name: 'Twitter Profile' },
+            'twitter-card': { width: 1200, height: 628, name: 'Twitter Card' },
+            // LinkedIn
+            'linkedin-post': { width: 1200, height: 627, name: 'LinkedIn Post' },
+            'linkedin-cover': { width: 1584, height: 396, name: 'LinkedIn Cover' },
+            'linkedin-profile': { width: 400, height: 400, name: 'LinkedIn Profile' },
+            'linkedin-company': { width: 1536, height: 768, name: 'LinkedIn Company' },
+            // Pinterest
+            'pinterest-pin': { width: 1000, height: 1500, name: 'Pinterest Pin' },
+            'pinterest-board': { width: 222, height: 150, name: 'Pinterest Board' },
+            'pinterest-profile': { width: 165, height: 165, name: 'Pinterest Profile' },
+            // Snapchat
+            'snapchat-ad': { width: 1080, height: 1920, name: 'Snapchat Ad' },
+            'snapchat-geofilter': { width: 1080, height: 1920, name: 'Snapchat Geofilter' },
+            // Music Platforms
+            'spotify-cover': { width: 640, height: 640, name: 'Spotify Cover' },
+            'soundcloud-cover': { width: 800, height: 800, name: 'SoundCloud Cover' },
+            'apple-music': { width: 1400, height: 1400, name: 'Apple Music Cover' },
+            // Desktop & Web
+            'desktop-wallpaper': { width: 1920, height: 1080, name: 'Desktop Wallpaper' },
+            'desktop-4k': { width: 3840, height: 2160, name: 'Desktop 4K' },
+            'web-banner': { width: 728, height: 90, name: 'Web Banner' },
+            'web-header': { width: 1920, height: 400, name: 'Web Header' },
+            // Mobile
+            'mobile-wallpaper': { width: 1080, height: 1920, name: 'Mobile Wallpaper' },
+            'iphone-wallpaper': { width: 1170, height: 2532, name: 'iPhone Wallpaper' },
+            'android-wallpaper': { width: 1080, height: 1920, name: 'Android Wallpaper' },
+            // Print & Documents
+            'a4-portrait': { width: 2480, height: 3508, name: 'A4 Portrait' },
+            'a4-landscape': { width: 3508, height: 2480, name: 'A4 Landscape' },
+            'business-card': { width: 1050, height: 600, name: 'Business Card' },
+            'poster-small': { width: 2480, height: 3508, name: 'Small Poster' },
+            'poster-large': { width: 4961, height: 7016, name: 'Large Poster' }
+        };
+
+        // UI elements for canvas controls
+        const canvasPresetSelector = document.getElementById('canvas-preset');
+        const canvasWidthInput = document.getElementById('canvas-width');
+        const canvasHeightInput = document.getElementById('canvas-height');
+        const canvasBackgroundInput = document.getElementById('canvas-background');
+        const canvasRatioIndicator = document.getElementById('canvas-ratio-indicator');
+
+        // Version controls
+        const versionDisplay = document.getElementById('version-display');
+        const versionDropdown = document.getElementById('version-dropdown');
+        const versionText = document.getElementById('version-text');
+
+        // Export modal elements
+        const exportModal = document.getElementById('export-modal');
+        const exportBtn = document.getElementById('btn-export');
+        const closeModal = document.getElementById('close-modal');
+        const cancelExport = document.getElementById('cancel-export');
+        const confirmExport = document.getElementById('confirm-export');
+        const exportFormat = document.getElementById('export-format');
+        const exportQuality = document.getElementById('export-quality');
+        const exportWidth = document.getElementById('export-width');
+        const exportHeight = document.getElementById('export-height');
+        const exportFilename = document.getElementById('export-filename');
+
+        // User profile
+        const userProfile = document.getElementById('user-profile');
+        const profileDropdown = document.getElementById('profile-dropdown');
+
+        // Property controls
+        const propName = document.getElementById('prop-name');
+        const propX = document.getElementById('prop-x');
+        const propY = document.getElementById('prop-y');
+        const propZ = document.getElementById('prop-z');
+        const propText = document.getElementById('prop-text');
+        const propTextSize = document.getElementById('prop-text-size');
+        const propTextWeight = document.getElementById('prop-text-weight');
+        const propTextFont = document.getElementById('prop-text-font');
+        const propTextSpacing = document.getElementById('prop-text-spacing');
+        const propTextShadow = document.getElementById('prop-text-shadow');
+        const propRotateX = document.getElementById('prop-rotate-x');
+        const propRotateY = document.getElementById('prop-rotate-y');
+        const propRotateZ = document.getElementById('prop-rotate-z');
+        const propSkewX = document.getElementById('prop-skew-x');
+        const propSkewY = document.getElementById('prop-skew-y');
+        const propScale = document.getElementById('prop-scale');
+        const propOpacity = document.getElementById('prop-opacity');
+        const propMainColor = document.getElementById('prop-main-color');
+        const propBgColor = document.getElementById('prop-bg-color');
+        const propBorderColor = document.getElementById('prop-border-color');
+        const propBorderWidth = document.getElementById('prop-border-width');
+        const propBorderRadius = document.getElementById('prop-border-radius');
+        const propShadowBlur = document.getElementById('prop-shadow-blur');
+        const propShadowColor = document.getElementById('prop-shadow-color');
+        const propHue = document.getElementById('prop-hue');
+        const propSaturation = document.getElementById('prop-saturation');
+        const propBrightness = document.getElementById('prop-brightness');
+        const propContrast = document.getElementById('prop-contrast');
+        const propGamma = document.getElementById('prop-gamma');
+        const propImageBlur = document.getElementById('prop-image-blur');
+        const propImageSepia = document.getElementById('prop-image-sepia');
+        const propImageInvert = document.getElementById('prop-image-invert');
+        const propImageGrayscale = document.getElementById('prop-image-grayscale');
+
+        // UI elements
+        const loading = document.getElementById('loading');
+
+        // === SECTION MANAGEMENT ===
+        function switchSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all toggles
+            document.querySelectorAll('.section-toggle').forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            // Add active class to selected toggle
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        }
+
+        // === LOGO ANIMATION ===
+        class LogoAnimator {
+            constructor() {
+                this.logoText = document.getElementById('logo-text');
+                this.letters = this.logoText.querySelectorAll('.logo-letter');
+                this.currentIndex = 0;
+                this.isAnimating = false;
+                this.colors = [
+                    ['#ff6b6b', '#ff8e8e'], // Red
+                    ['#4ecdc4', '#7fdddd'], // Teal
+                    ['#45b7d1', '#78c5e0'], // Blue
+                    ['#96ceb4', '#b8dcc6'], // Green
+                    ['#feca57', '#fed976'], // Yellow
+                    ['#ae00ff', '#c08cff'], // Purple
+                    ['#ff0055', '#ff80a5'], // Pink
+                    ['#00ff88', '#66ffaa'], // Mint
+                    ['#ff9500', '#ffb347'], // Orange
+                    ['#00f0ff', '#0ff']     // Cyan (default)
+                ];
+                this.init();
+            }
+
+            init() {
+                this.startAnimation();
+            }
+
+            startAnimation() {
+                if (this.isAnimating) return;
+                
+                this.isAnimating = true;
+                this.animateNextLetter();
+            }
+
+            animateNextLetter() {
+                if (this.currentIndex >= this.letters.length) {
+                    // Animation complete, reset after delay
+                    setTimeout(() => {
+                        this.resetAllLetters();
+                        this.currentIndex = 0;
+                        this.isAnimating = false;
+                        // Start next cycle after 3 seconds
+                        setTimeout(() => this.startAnimation(), 3000);
+                    }, 1000);
+                    return;
+                }
+
+                const letter = this.letters[this.currentIndex];
+                const colorPair = this.colors[this.currentIndex % this.colors.length];
+                
+                // Apply animation class and color
+                letter.classList.add('animate');
+                letter.style.background = `linear-gradient(45deg, ${colorPair[0]}, ${colorPair[1]})`;
+                letter.style.webkitBackgroundClip = 'text';
+                letter.style.webkitTextFillColor = 'transparent';
+                letter.style.backgroundClip = 'text';
+
+                // Move to next letter after delay
+                setTimeout(() => {
+                    this.currentIndex++;
+                    this.animateNextLetter();
+                }, 300);
+            }
+
+            resetAllLetters() {
+                this.letters.forEach(letter => {
+                    letter.classList.remove('animate');
+                    letter.style.background = 'linear-gradient(45deg, #00f0ff, #0ff)';
+                    letter.style.webkitBackgroundClip = 'text';
+                    letter.style.webkitTextFillColor = 'transparent';
+                    letter.style.backgroundClip = 'text';
+                });
+            }
+        }
+
+        // === VERSION MANAGEMENT ===
+        function switchVersion(version) {
+            currentVersion = version;
+            versionText.textContent = version;
+            
+            // Update active state
+            document.querySelectorAll('.version-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.dataset.version === version) {
+                    option.classList.add('active');
+                }
+            });
+
+            // Update version display styling
+            if (version === 'v1.0') {
+                versionDisplay.classList.add('v1');
+                showNotification('🚀 Switched to v1.0 Beta - Advanced features unlocked!', 'success');
+                enableBetaFeatures();
+            } else {
+                versionDisplay.classList.remove('v1');
+                showNotification('Switched to v0.1 - Current stable version', 'success');
+                disableBetaFeatures();
+            }
+            
+            versionDropdown.classList.remove('show');
+        }
+
+        function enableBetaFeatures() {
+            // Enable all beta features
+            document.querySelectorAll('.beta-feature').forEach(element => {
+                element.classList.add('enabled');
+                if (element.tagName === 'BUTTON' || element.tagName === 'SELECT' || element.tagName === 'INPUT') {
+                    element.disabled = false;
+                }
+            });
+
+            // Update control buttons styling
+            document.querySelectorAll('.control-btn.beta-feature').forEach(btn => {
+                btn.classList.add('beta-enabled');
+            });
+
+            // Update section toggle for advanced
+            const advancedToggle = document.querySelector('[data-section="advanced"]');
+            if (advancedToggle) {
+                advancedToggle.classList.add('beta-mode');
+            }
+
+            // Enable export formats
+            document.querySelectorAll('#export-format .beta-feature').forEach(option => {
+                option.disabled = false;
+                option.textContent = option.textContent.replace(' (v1.0 Beta)', '');
+            });
+        }
+
+        function disableBetaFeatures() {
+            // Disable all beta features
+            document.querySelectorAll('.beta-feature').forEach(element => {
+                element.classList.remove('enabled');
+                if (element.tagName === 'BUTTON' || element.tagName === 'SELECT' || element.tagName === 'INPUT') {
+                    element.disabled = true;
+                }
+            });
+
+            // Update control buttons styling
+            document.querySelectorAll('.control-btn.beta-feature').forEach(btn => {
+                btn.classList.remove('beta-enabled');
+            });
+
+            // Update section toggle for advanced
+            const advancedToggle = document.querySelector('[data-section="advanced"]');
+            if (advancedToggle) {
+                advancedToggle.classList.remove('beta-mode');
+            }
+
+            // Disable export formats
+            document.querySelectorAll('#export-format .beta-feature').forEach(option => {
+                option.disabled = true;
+                if (!option.textContent.includes('(v1.0 Beta)')) {
+                    option.textContent += ' (v1.0 Beta)';
+                }
+            });
+
+            // Switch back to basic section if advanced is active
+            if (document.getElementById('advanced-section').classList.contains('active')) {
+                switchSection('basic');
+            }
+        }
+
+        // === INITIALIZATION ===
+        init();
+        animate();
+
+        // Initialize logo animator
+        const logoAnimator = new LogoAnimator();
+
+        // === DRAG SYSTEM ===
+        let isDragging = false;
+        let dragObject = null;
+        let dragStartMouse = new THREE.Vector2();
+        let dragStartPosition = new THREE.Vector3();
+        let dragPlane = new THREE.Plane();
+        let dragIntersection = new THREE.Vector3();
+
+        function init() {
+            // Setup Three.js renderer
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                preserveDrawingBuffer: true,
+                antialias: true
+            });
+            renderer.setClearColor(0x14141a);
+
+            // Setup scene and camera
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, 1, 0.1, 1000);
+            camera.position.z = 3;
+
+            // Event listeners for drag system
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('mouseleave', onMouseUp); // Stop dragging if mouse leaves canvas
+            window.addEventListener('resize', onWindowResize);
+
+            // Initialize canvas size
+            updateCanvasSize(currentCanvasWidth, currentCanvasHeight);
+
+            // Initialize first state
+            saveState();
+            showNotification('maxEdit v1.0 Beta loaded successfully! 🚀', 'success');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function onMouseDown(e) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            const mouse = new THREE.Vector2(x, y);
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(objects);
+
+            if (intersects.length > 0) {
+                const clickedObject = intersects[0].object;
+                
+                // Select the object
+                selectElement(clickedObject);
+                
+                // Start dragging
+                isDragging = true;
+                dragObject = clickedObject;
+                dragStartMouse.copy(mouse);
+                dragStartPosition.copy(clickedObject.position);
+                
+                // Create a drag plane perpendicular to camera
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                dragPlane.setFromNormalAndCoplanarPoint(cameraDirection, clickedObject.position);
+                
+                // Change cursor to indicate dragging
+                canvas.style.cursor = 'grabbing';
+                
+            } else {
+                // Clicked on empty space - deselect
+                selectElement(null);
+                isDragging = false;
+                dragObject = null;
+            }
+        }
+
+        function onMouseMove(e) {
+            if (!isDragging || !dragObject) {
+                // Update cursor based on hover
+                const rect = renderer.domElement.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+                const mouse = new THREE.Vector2(x, y);
+
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(objects);
+
+                canvas.style.cursor = intersects.length > 0 ? 'grab' : 'default';
+                return;
+            }
+
+            // Calculate mouse movement
+            const rect = renderer.domElement.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            const y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            const currentMouse = new THREE.Vector2(x, y);
+            
+            // Calculate new position using raycasting on the drag plane
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(currentMouse, camera);
+            
+            if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+                // Update object position
+                dragObject.position.copy(dragIntersection);
+                
+                // Update properties panel if this object is selected
+                if (selected === dragObject) {
+                    updateProperties();
+                }
+            }
+        }
+
+        function onMouseUp(e) {
+            if (isDragging && dragObject) {
+                // Save state after dragging
+                saveState();
+                showNotification(`${dragObject.userData.type} moved`, 'success');
+            }
+            
+            isDragging = false;
+            dragObject = null;
+            canvas.style.cursor = 'default';
+        }
+
+        function onWindowResize() {
+            updateCanvasSize(currentCanvasWidth, currentCanvasHeight);
+        }
+
+        // === UTILITY FUNCTIONS ===
+        function generateId() {
+            return 'element_' + (++elementCounter);
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.getElementById('notification-container').appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        // === STATE MANAGEMENT ===
+        function saveState() {
+            const state = {
+                objects: objects.map(obj => ({
+                    id: obj.userData.id,
+                    type: obj.userData.type,
+                    position: obj.position.toArray(),
+                    rotation: obj.rotation.toArray(),
+                    scale: obj.scale.toArray(),
+                    text: obj.userData.text || '',
+                    options: obj.userData.options || {},
+                    opacity: obj.material.opacity || 1
+                }))
+            };
+
+            history = history.slice(0, historyIndex + 1);
+            history.push(JSON.stringify(state));
+            historyIndex++;
+
+            if (history.length > 50) {
+                history.shift();
+                historyIndex--;
+            }
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(JSON.parse(history[historyIndex]));
+                showNotification('Undone', 'success');
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(JSON.parse(history[historyIndex]));
+                showNotification('Redone', 'success');
+            }
+        }
+
+        function restoreState(state) {
+            // Clear scene
+            objects.forEach(obj => scene.remove(obj));
+            objects.length = 0;
+
+            // Restore objects
+            state.objects.forEach(objData => {
+                let obj;
+                switch(objData.type) {
+                    case 'text':
+                        obj = createTextMesh(objData.text, objData.options);
+                        break;
+                    case 'shape':
+                        obj = createShapeMesh();
+                        break;
+                    case 'rectangle':
+                        obj = createRectangleMesh();
+                        break;
+                    case 'cube':
+                        obj = createCubeMesh();
+                        break;
+                    case 'gradient':
+                        obj = createGradientMesh();
+                        break;
+                    case 'image':
+                        // For images, we'll need to recreate them differently
+                        // This is a simplified version
+                        obj = createRectangleMesh();
+                        obj.userData.type = 'image';
+                        break;
+                }
+
+                if (obj) {
+                    obj.userData.id = objData.id;
+                    obj.userData.type = objData.type;
+                    obj.userData.text = objData.text;
+                    obj.userData.options = objData.options;
+                    obj.position.fromArray(objData.position);
+                    obj.rotation.fromArray(objData.rotation);
+                    obj.scale.fromArray(objData.scale);
+                    obj.material.opacity = objData.opacity || 1;
+                    scene.add(obj);
+                    objects.push(obj);
+                }
+            });
+
+            if (selected && !objects.includes(selected)) {
+                selected = null;
+                clearProperties();
+            }
+        }
+
+        // === IMAGE HANDLING ===
+        function handleImageUpload(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                    const texture = new THREE.Texture(img);
+                    texture.needsUpdate = true;
+                    texture.colorSpace = THREE.SRGBColorSpace;
+
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        transparent: true
+                    });
+
+                    const geometry = new THREE.PlaneGeometry(1.6, 0.9);
+                    const mesh = new THREE.Mesh(geometry, material);
+
+                    mesh.userData.id = generateId();
+                    mesh.userData.type = 'image';
+                    mesh.userData.options = {
+                        brightness: 100,
+                        contrast: 100,
+                        saturation: 100,
+                        hue: 0,
+                        blur: 0,
+                        sepia: 0,
+                        invert: 0,
+                        grayscale: 0
+                    };
+
+                    mesh.position.set(0, 0, 0);
+                    scene.add(mesh);
+                    objects.push(mesh);
+                    selectElement(mesh);
+                    saveState();
+                    showNotification('Image added successfully!', 'success');
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // === TEXT CREATION ===
+        function createTextTexture(text, options) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            // Only draw background if it's not transparent
+            if (options.bg !== 'transparent') {
+                ctx.fillStyle = options.bg;
+                ctx.strokeStyle = options.border;
+                ctx.lineWidth = options.borderWidth;
+
+                const w = canvas.width, h = canvas.height;
+                const r = options.radius || 0;
+
+                ctx.beginPath();
+                ctx.moveTo(r, 0);
+                ctx.lineTo(w - r, 0);
+                ctx.quadraticCurveTo(w, 0, w, r);
+                ctx.lineTo(w, h - r);
+                ctx.quadraticCurveTo(w, h, w - r, h);
+                ctx.lineTo(r, h);
+                ctx.quadraticCurveTo(0, h, 0, h - r);
+                ctx.lineTo(0, r);
+                ctx.quadraticCurveTo(0, 0, r, 0);
+                ctx.closePath();
+                ctx.fill();
+                if (options.borderWidth > 0) ctx.stroke();
+            }
+
+            // Apply text shadow if enabled
+            if (options.textShadow > 0) {
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = options.textShadow;
+                ctx.shadowOffsetX = options.textShadow / 2;
+                ctx.shadowOffsetY = options.textShadow / 2;
+            }
+
+            // Draw the text
+            ctx.fillStyle = options.color;
+            ctx.font = `${options.weight || 'normal'} ${options.size}px ${options.font || 'Arial'}`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            
+            // Apply letter spacing
+            if (options.letterSpacing && options.letterSpacing !== 0) {
+                ctx.letterSpacing = `${options.letterSpacing}px`;
+            }
+
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function createTextMesh(text, options) {
+            const defaultOptions = {
+                size: 32,
+                color: "#ffffff",
+                bg: "transparent",
+                border: "transparent",
+                borderWidth: 0,
+                radius: 0,
+                weight: 'normal',
+                font: 'Arial',
+                letterSpacing: 0,
+                textShadow: 0
+            };
+
+            const opts = { ...defaultOptions, ...options };
+            const texture = createTextTexture(text, opts);
+
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true
+            });
+
+            const geometry = new THREE.PlaneGeometry(1.6, 0.8);
+            const mesh = new THREE.Mesh(geometry, material);
+
+            mesh.userData.text = text;
+            mesh.userData.options = opts;
+            mesh.userData.id = generateId();
+            mesh.userData.type = 'text';
+
+            return mesh;
+        }
+
+        function createShapeMesh() {
+            const geometry = new THREE.CircleGeometry(0.5, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData.id = generateId();
+            mesh.userData.type = 'shape';
+            mesh.userData.options = { color: '#00ffff' };
+
+            return mesh;
+        }
+
+        function createRectangleMesh() {
+            const geometry = new THREE.PlaneGeometry(1.5, 1);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData.id = generateId();
+            mesh.userData.type = 'rectangle';
+            mesh.userData.options = { color: '#00ffff' };
+
+            return mesh;
+        }
+
+        function createCubeMesh() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.userData.id = generateId();
+            mesh.userData.type = 'cube';
+            mesh.userData.options = { color: '#00ffff' };
+
+            return mesh;
+        }
+
+        function createGradientMesh() {
+            // Create gradient texture
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+            gradient.addColorStop(0, '#ff6b6b');
+            gradient.addColorStop(0.5, '#4ecdc4');
+            gradient.addColorStop(1, '#45b7d1');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true
+            });
+
+            const geometry = new THREE.PlaneGeometry(1.5, 1);
+            const mesh = new THREE.Mesh(geometry, material);
+
+            mesh.userData.id = generateId();
+            mesh.userData.type = 'gradient';
+            mesh.userData.options = { 
+                startColor: '#ff6b6b',
+                endColor: '#45b7d1',
+                direction: 'diagonal'
+            };
+
+            return mesh;
+        }
+
+        // === ELEMENT SELECTION ===
+        function selectElement(obj) {
+            selected = obj;
+            updateProperties();
+        }
+
+        function updateProperties() {
+            if (!selected) {
+                clearProperties();
+                return;
+            }
+
+            propName.value = selected.userData.id || '';
+            propX.value = selected.position.x;
+            propY.value = selected.position.y;
+            propZ.value = selected.position.z;
+            propRotateX.value = THREE.MathUtils.radToDeg(selected.rotation.x);
+            propRotateY.value = THREE.MathUtils.radToDeg(selected.rotation.y);
+            propRotateZ.value = THREE.MathUtils.radToDeg(selected.rotation.z);
+            propScale.value = selected.scale.x;
+            propOpacity.value = (selected.material.opacity || 1) * 100;
+
+            // Hide all property lines first
+            hideAllPropertyLines();
+
+            // Show relevant controls based on type
+            if (selected.userData.type === 'text') {
+                showTextProperties();
+            } else if (selected.userData.type === 'image') {
+                showImageProperties();
+            } else if (['shape', 'rectangle', 'cube', 'gradient'].includes(selected.userData.type)) {
+                showShapeProperties();
+            }
+        }
+
+        function hideAllPropertyLines() {
+            const lines = [
+                'text-content-line', 'text-size-line', 'text-weight-line', 'text-font-line',
+                'text-spacing-line', 'text-shadow-line', 'main-color-line', 'bg-color-line', 
+                'border-color-line', 'border-width-line', 'border-radius-line',
+                'shadow-blur-line', 'shadow-color-line', 'image-blur-line', 'image-sepia-line',
+                'image-invert-line', 'image-grayscale-line', 'bg-none-line', 'border-none-line'
+            ];
+
+            lines.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
+            });
+        }
+
+        function showTextProperties() {
+            const opt = selected.userData.options || {};
+
+            propText.value = selected.userData.text || '';
+            propTextSize.value = opt.size || 32;
+            propTextWeight.value = opt.weight || 'normal';
+            if (propTextFont) propTextFont.value = opt.font || 'Arial';
+            if (propTextSpacing) propTextSpacing.value = opt.letterSpacing || 0;
+            if (propTextShadow) propTextShadow.value = opt.textShadow || 0;
+            propMainColor.value = opt.color || '#ffffff';
+            propBgColor.value = opt.bg === 'transparent' ? '#000000' : opt.bg;
+            propBorderColor.value = opt.border === 'transparent' ? '#ff0000' : opt.border;
+            propBorderWidth.value = opt.borderWidth || 0;
+            propBorderRadius.value = opt.radius || 0;
+
+            document.getElementById('text-content-line').style.display = 'grid';
+            document.getElementById('text-size-line').style.display = 'grid';
+            document.getElementById('text-weight-line').style.display = 'grid';
+            if (currentVersion === 'v1.0') {
+                document.getElementById('text-font-line').style.display = 'grid';
+                document.getElementById('text-spacing-line').style.display = 'grid';
+                document.getElementById('text-shadow-line').style.display = 'grid';
+            }
+            document.getElementById('main-color-line').style.display = 'grid';
+            document.getElementById('bg-color-line').style.display = 'grid';
+            document.getElementById('border-color-line').style.display = 'grid';
+            document.getElementById('border-width-line').style.display = 'grid';
+            document.getElementById('border-radius-line').style.display = 'grid';
+            document.getElementById('bg-none-line').style.display = 'grid';
+            document.getElementById('border-none-line').style.display = 'grid';
+
+            if (currentVersion === 'v1.0') {
+                document.getElementById('shadow-blur-line').style.display = 'grid';
+                document.getElementById('shadow-color-line').style.display = 'grid';
+            }
+        }
+
+        function showImageProperties() {
+            const opt = selected.userData.options || {};
+
+            if (currentVersion === 'v1.0') {
+                if (propImageBlur) propImageBlur.value = opt.blur || 0;
+                if (propImageSepia) propImageSepia.value = opt.sepia || 0;
+                if (propImageInvert) propImageInvert.value = opt.invert || 0;
+                if (propImageGrayscale) propImageGrayscale.value = opt.grayscale || 0;
+
+                document.getElementById('image-blur-line').style.display = 'grid';
+                document.getElementById('image-sepia-line').style.display = 'grid';
+                document.getElementById('image-invert-line').style.display = 'grid';
+                document.getElementById('image-grayscale-line').style.display = 'grid';
+            }
+        }
+
+        function showShapeProperties() {
+            const opt = selected.userData.options || {};
+            propMainColor.value = opt.color || '#00ffff';
+            document.getElementById('main-color-line').style.display = 'grid';
+        }
+
+        function clearProperties() {
+            propName.value = '';
+            propX.value = '0';
+            propY.value = '0';
+            propZ.value = '0';
+            propRotateX.value = '0';
+            propRotateY.value = '0';
+            propRotateZ.value = '0';
+            propScale.value = '1';
+            propOpacity.value = '100';
+            propText.value = '';
+            hideAllPropertyLines();
+        }
+
+        function applyPropertiesToElement() {
+            if (!selected) return;
+
+            selected.position.x = parseFloat(propX.value);
+            selected.position.y = parseFloat(propY.value);
+            selected.position.z = parseFloat(propZ.value);
+            selected.rotation.x = THREE.MathUtils.degToRad(parseFloat(propRotateX.value));
+            selected.rotation.y = THREE.MathUtils.degToRad(parseFloat(propRotateY.value));
+            selected.rotation.z = THREE.MathUtils.degToRad(parseFloat(propRotateZ.value));
+
+            const scale = parseFloat(propScale.value);
+            selected.scale.set(scale, scale, scale);
+            selected.material.opacity = parseFloat(propOpacity.value) / 100;
+
+            // Update element name
+            if (propName.value !== selected.userData.id) {
+                selected.userData.id = propName.value;
+            }
+
+            // Apply v1.0 advanced transforms
+            if (currentVersion === 'v1.0' && propSkewX && propSkewY) {
+                // Apply skew transforms (simplified implementation)
+                const skewX = parseFloat(propSkewX.value) * Math.PI / 180;
+                const skewY = parseFloat(propSkewY.value) * Math.PI / 180;
+                // Note: Three.js doesn't have built-in skew, this would need custom shader implementation
+            }
+
+            // Update based on type
+            if (selected.userData.type === 'text') {
+                updateTextProperties();
+            } else if (selected.userData.type === 'image') {
+                updateImageProperties();
+            } else if (['shape', 'rectangle', 'cube', 'gradient'].includes(selected.userData.type)) {
+                updateShapeProperties();
+            }
+        }
+
+        function updateTextProperties() {
+            if (!selected || selected.userData.type !== 'text') return;
+
+            const opt = selected.userData.options;
+            const text = propText.value;
+
+            opt.size = parseInt(propTextSize.value);
+            opt.weight = propTextWeight.value;
+            opt.color = propMainColor.value;
+            opt.bg = propBgColor.value;
+            opt.border = propBorderColor.value;
+            opt.borderWidth = parseInt(propBorderWidth.value);
+            opt.radius = parseInt(propBorderRadius.value);
+
+            if (currentVersion === 'v1.0') {
+                if (propTextFont) opt.font = propTextFont.value;
+                if (propTextSpacing) opt.letterSpacing = parseFloat(propTextSpacing.value);
+                if (propTextShadow) opt.textShadow = parseInt(propTextShadow.value);
+            }
+
+            const texture = createTextTexture(text, opt);
+            selected.material.map = texture;
+            selected.material.needsUpdate = true;
+            selected.userData.text = text;
+        }
+
+        function updateImageProperties() {
+            if (!selected || selected.userData.type !== 'image') return;
+
+            const opt = selected.userData.options;
+
+            if (currentVersion === 'v1.0') {
+                if (propImageBlur) opt.blur = parseInt(propImageBlur.value);
+                if (propImageSepia) opt.sepia = parseInt(propImageSepia.value);
+                if (propImageInvert) opt.invert = parseInt(propImageInvert.value);
+                if (propImageGrayscale) opt.grayscale = parseInt(propImageGrayscale.value);
+
+                // Apply CSS filters to the material (simplified approach)
+                const filters = [];
+                if (opt.blur > 0) filters.push(`blur(${opt.blur}px)`);
+                if (opt.sepia > 0) filters.push(`sepia(${opt.sepia}%)`);
+                if (opt.invert > 0) filters.push(`invert(${opt.invert}%)`);
+                if (opt.grayscale > 0) filters.push(`grayscale(${opt.grayscale}%)`);
+
+                // Note: Three.js material filters would need custom shader implementation
+            }
+        }
+
+        function updateShapeProperties() {
+            if (!selected || !['shape', 'rectangle', 'cube', 'gradient'].includes(selected.userData.type)) return;
+
+            const opt = selected.userData.options;
+            opt.color = propMainColor.value;
+            selected.material.color.setHex(opt.color.replace('#', '0x'));
+        }
+
+        // === ADVANCED v1.0 FEATURES ===
+        function resetFilters() {
+            if (!selected) {
+                showNotification('Please select an element first', 'error');
+                return;
+            }
+
+            if (selected.userData.type === 'image') {
+                selected.userData.options.blur = 0;
+                selected.userData.options.sepia = 0;
+                selected.userData.options.invert = 0;
+                selected.userData.options.grayscale = 0;
+                updateProperties();
+                updateImageProperties();
+                showNotification('Image filters reset', 'success');
+            } else if (selected.userData.type === 'text') {
+                selected.userData.options.textShadow = 0;
+                selected.userData.options.letterSpacing = 0;
+                updateProperties();
+                updateTextProperties();
+                showNotification('Text effects reset', 'success');
+            }
+        }
+
+        function copyStyle() {
+            if (!selected) {
+                showNotification('Please select an element first', 'error');
+                return;
+            }
+
+            copiedStyle = {
+                type: selected.userData.type,
+                options: { ...selected.userData.options },
+                scale: selected.scale.x,
+                opacity: selected.material.opacity
+            };
+
+            showNotification('Style copied to clipboard', 'success');
+        }
+
+        function pasteStyle() {
+            if (!selected) {
+                showNotification('Please select an element first', 'error');
+                return;
+            }
+
+            if (!copiedStyle) {
+                showNotification('No style copied yet', 'error');
+                return;
+            }
+
+            if (copiedStyle.type === selected.userData.type) {
+                selected.userData.options = { ...copiedStyle.options };
+                selected.scale.setScalar(copiedStyle.scale);
+                selected.material.opacity = copiedStyle.opacity;
+
+                updateProperties();
+                if (selected.userData.type === 'text') {
+                    updateTextProperties();
+                } else if (selected.userData.type === 'image') {
+                    updateImageProperties();
+                } else {
+                    updateShapeProperties();
+                }
+
+                saveState();
+                showNotification('Style pasted successfully', 'success');
+            } else {
+                showNotification('Style type mismatch', 'error');
+            }
+        }
+
+        // === CANVAS RATIO MANAGEMENT ===
+        function updateCanvasSize(width, height) {
+            currentCanvasWidth = width;
+            currentCanvasHeight = height;
+
+            canvasWidthInput.value = width;
+            canvasHeightInput.value = height;
+            exportWidth.value = width;
+            exportHeight.value = height;
+
+            // Calculate scale to fit in viewport with exact ratio
+            const mainCanvas = document.getElementById('canvas-main');
+            const containerWidth = mainCanvas.clientWidth - 26; // Account for padding and border
+            const containerHeight = mainCanvas.clientHeight - 26; // Account for padding and border
+
+            const scaleX = containerWidth / width;
+            const scaleY = containerHeight / height;
+            canvasScale = Math.min(scaleX, scaleY, 1);
+
+            // Update canvas size to maintain aspect ratio
+            const displayWidth = width * canvasScale;
+            const displayHeight = height * canvasScale;
+            
+            // Update renderer size
+            renderer.setSize(displayWidth, displayHeight);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+
+            // Update display
+            updateCanvasDisplay();
+        }
+
+        function updateCanvasDisplay() {
+            const ratio = calculateRatio(currentCanvasWidth, currentCanvasHeight);
+            canvasRatioIndicator.textContent = ratio;
+        }
+
+        function calculateRatio(width, height) {
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const divisor = gcd(width, height);
+            return `${width / divisor}:${height / divisor}`;
+        }
+
+        function applyCanvasPreset(presetKey) {
+            const preset = canvasPresets[presetKey];
+            if (preset) {
+                updateCanvasSize(preset.width, preset.height);
+                showNotification(`Applied ${preset.name} preset`, 'success');
+            }
+        }
+
+        function centerAllContent() {
+            objects.forEach(obj => {
+                obj.position.x = 0;
+                obj.position.y = 0;
+            });
+
+            if (selected) {
+                updateProperties();
+            }
+
+            saveState();
+            showNotification('All content centered', 'success');
+        }
+
+        function fitContentToCanvas() {
+            if (objects.length === 0) return;
+
+            // Calculate bounding box of all objects
+            let minX = Infinity, maxX = -Infinity;
+            let minY = Infinity, maxY = -Infinity;
+
+            objects.forEach(obj => {
+                const box = new THREE.Box3().setFromObject(obj);
+                minX = Math.min(minX, box.min.x);
+                maxX = Math.max(maxX, box.max.x);
+                minY = Math.min(minY, box.min.y);
+                maxY = Math.max(maxY, box.max.y);
+            });
+
+            const contentWidth = maxX - minX;
+            const contentHeight = maxY - minY;
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+
+            // Calculate scale to fit content
+            const canvasAspect = currentCanvasWidth / currentCanvasHeight;
+            const contentAspect = contentWidth / contentHeight;
+
+            let scale;
+            if (contentAspect > canvasAspect) {
+                scale = (currentCanvasWidth * 0.8) / (contentWidth * 100);
+            } else {
+                scale = (currentCanvasHeight * 0.8) / (contentHeight * 100);
+            }
+
+            // Apply transformations
+            objects.forEach(obj => {
+                obj.position.x = (obj.position.x - centerX) * scale;
+                obj.position.y = (obj.position.y - centerY) * scale;
+                obj.scale.multiplyScalar(scale);
+            });
+
+            if (selected) {
+                updateProperties();
+            }
+
+            saveState();
+            showNotification('Content fitted to canvas', 'success');
+        }
+
+        function updateCanvasBackground() {
+            const color = canvasBackgroundInput.value;
+            renderer.setClearColor(color);
+            showNotification('Canvas background updated', 'success');
+        }
+
+        // === EXPORT FUNCTIONS ===
+        function exportWithSettings() {
+            showLoading();
+
+            try {
+                const quality = parseFloat(exportQuality.value);
+                const format = exportFormat.value;
+                const width = parseInt(exportWidth.value);
+                const height = parseInt(exportHeight.value);
+                const filename = exportFilename.value || 'maxEdit-export';
+
+                // Check if beta format is selected but not in v1.0
+                if ((format === 'mp4' || format === 'gif') && currentVersion !== 'v1.0') {
+                    showNotification('This format requires v1.0 Beta', 'error');
+                    hideLoading();
+                    return;
+                }
+
+                // Temporarily increase render size for quality
+                const originalWidth = renderer.domElement.width;
+                const originalHeight = renderer.domElement.height;
+
+                renderer.setSize(width * quality, height * quality);
+                renderer.render(scene, camera);
+
+                const link = document.createElement('a');
+                link.download = `${filename}.${format}`;
+
+                if (format === 'jpg') {
+                    link.href = renderer.domElement.toDataURL('image/jpeg', 0.95);
+                } else if (format === 'webp') {
+                    link.href = renderer.domElement.toDataURL('image/webp', 0.95);
+                } else if (format === 'mp4' && currentVersion === 'v1.0') {
+                    // Placeholder for video export (would need additional implementation)
+                    showNotification('Video export coming soon in v1.0!', 'success');
+                    hideLoading();
+                    exportModal.style.display = 'none';
+                    return;
+                } else if (format === 'gif' && currentVersion === 'v1.0') {
+                    // Placeholder for GIF export (would need additional implementation)
+                    showNotification('GIF export coming soon in v1.0!', 'success');
+                    hideLoading();
+                    exportModal.style.display = 'none';
+                    return;
+                } else {
+                    link.href = renderer.domElement.toDataURL('image/png');
+                }
+
+                link.click();
+
+                // Restore original size
+                renderer.setSize(originalWidth, originalHeight);
+
+                showNotification(`${format.toUpperCase()} exported at ${quality}x quality!`, 'success');
+                exportModal.style.display = 'none';
+
+            } catch (error) {
+                showNotification('Export failed: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // === OBJECT CONTROLS ===
+        function duplicateObject() {
+            if (!selected) {
+                showNotification('Please select an object to duplicate', 'error');
+                return;
+            }
+
+            let newObj;
+            switch(selected.userData.type) {
+                case 'text':
+                    newObj = createTextMesh(selected.userData.text, selected.userData.options);
+                    break;
+                case 'shape':
+                    newObj = createShapeMesh();
+                    break;
+                case 'rectangle':
+                    newObj = createRectangleMesh();
+                    break;
+                case 'cube':
+                    newObj = createCubeMesh();
+                    break;
+                case 'gradient':
+                    newObj = createGradientMesh();
+                    break;
+            }
+
+            if (newObj) {
+                newObj.position.copy(selected.position);
+                newObj.position.x += 0.2;
+                newObj.position.y += 0.2;
+                newObj.rotation.copy(selected.rotation);
+                newObj.scale.copy(selected.scale);
+                newObj.material.opacity = selected.material.opacity;
+
+                scene.add(newObj);
+                objects.push(newObj);
+                selectElement(newObj);
+                saveState();
+                showNotification('Object duplicated', 'success');
+            }
+        }
+
+        function deleteObject() {
+            if (!selected) {
+                showNotification('Please select an object to delete', 'error');
+                return;
+            }
+
+            scene.remove(selected);
+            const index = objects.indexOf(selected);
+            if (index > -1) {
+                objects.splice(index, 1);
+            }
+
+            selected = null;
+            clearProperties();
+            saveState();
+            showNotification('Object deleted', 'success');
+        }
+
+        // === EVENT LISTENERS ===
+
+        // Section togglers
+        document.querySelectorAll('.section-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const section = toggle.dataset.section;
+                
+                // Check if advanced section is clicked but not in v1.0
+                if (section === 'advanced' && currentVersion !== 'v1.0') {
+                    showNotification('Advanced features require v1.0 Beta', 'error');
+                    return;
+                }
+                
+                switchSection(section);
+            });
+        });
+
+        // Version dropdown
+        versionDisplay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            versionDropdown.classList.toggle('show');
+        });
+
+        document.querySelectorAll('.version-option').forEach(option => {
+            option.addEventListener('click', () => {
+                switchVersion(option.dataset.version);
+            });
+        });
+
+        // User profile dropdown
+        userProfile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => {
+            profileDropdown.classList.remove('show');
+            versionDropdown.classList.remove('show');
+        });
+
+        // Export modal
+        exportBtn.addEventListener('click', () => {
+            exportModal.style.display = 'block';
+            exportWidth.value = currentCanvasWidth;
+            exportHeight.value = currentCanvasHeight;
+        });
+
+        closeModal.addEventListener('click', () => {
+            exportModal.style.display = 'none';
+        });
+
+        cancelExport.addEventListener('click', () => {
+            exportModal.style.display = 'none';
+        });
+
+        confirmExport.addEventListener('click', exportWithSettings);
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.style.display = 'none';
+            }
+        });
+
+        // Tool buttons
+        addTextBtn.addEventListener('click', () => {
+            const mesh = createTextMesh('Edit Me');
+            scene.add(mesh);
+            objects.push(mesh);
+            selectElement(mesh);
+            saveState();
+            showNotification('Text element added', 'success');
+        });
+
+        addShapeBtn.addEventListener('click', () => {
+            const mesh = createShapeMesh();
+            scene.add(mesh);
+            objects.push(mesh);
+            selectElement(mesh);
+            saveState();
+            showNotification('Circle shape added', 'success');
+        });
+
+        addRectangleBtn.addEventListener('click', () => {
+            const mesh = createRectangleMesh();
+            scene.add(mesh);
+            objects.push(mesh);
+            selectElement(mesh);
+            saveState();
+            showNotification('Rectangle added', 'success');
+        });
+
+        addCubeBtn.addEventListener('click', () => {
+            const mesh = createCubeMesh();
+            scene.add(mesh);
+            objects.push(mesh);
+            selectElement(mesh);
+            saveState();
+            showNotification('3D Cube added', 'success');
+        });
+
+        addImageBtn.addEventListener('click', () => {
+            fileImageInput.click();
+        });
+
+        fileImageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            handleImageUpload(file);
+            fileImageInput.value = '';
+        });
+
+        // v1.0 Beta features
+        if (addGradientBtn) {
+            addGradientBtn.addEventListener('click', () => {
+                if (currentVersion !== 'v1.0') {
+                    showNotification('Gradient tool requires v1.0 Beta', 'error');
+                    return;
+                }
+
+                const mesh = createGradientMesh();
+                scene.add(mesh);
+                objects.push(mesh);
+                selectElement(mesh);
+                saveState();
+                showNotification('Gradient added', 'success');
+            });
+        }
+
+        // Property controls
+        [propName, propX, propY, propZ, propRotateX, propRotateY, propRotateZ,
+         propScale, propOpacity, propText, propTextSize, propTextWeight,
+         propMainColor, propBgColor, propBorderColor, propBorderWidth,
+         propBorderRadius].forEach(input => {
+            if (input) {
+                input.addEventListener('input', applyPropertiesToElement);
+            }
+        });
+
+        // v1.0 Beta property controls
+        if (currentVersion === 'v1.0') {
+            [propTextFont, propTextSpacing, propTextShadow, propSkewX, propSkewY,
+             propHue, propSaturation, propBrightness, propContrast, propGamma,
+             propImageBlur, propImageSepia, propImageInvert, propImageGrayscale,
+             propShadowBlur, propShadowColor].forEach(input => {
+                if (input) {
+                    input.addEventListener('input', applyPropertiesToElement);
+                }
+            });
+        }
+
+        // Object control buttons
+        document.getElementById('duplicate-object').addEventListener('click', duplicateObject);
+        document.getElementById('delete-object').addEventListener('click', deleteObject);
+
+        // v1.0 Advanced control buttons
+        const resetFiltersBtn = document.getElementById('reset-filters');
+        const copyStyleBtn = document.getElementById('copy-style');
+        const pasteStyleBtn = document.getElementById('paste-style');
+
+        if (resetFiltersBtn) resetFiltersBtn.addEventListener('click', resetFilters);
+        if (copyStyleBtn) copyStyleBtn.addEventListener('click', copyStyle);
+        if (pasteStyleBtn) pasteStyleBtn.addEventListener('click', pasteStyle);
+
+        // Keyboard shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'z':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            redo();
+                        } else {
+                            undo();
+                        }
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        redo();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        showNotification('Auto-save enabled', 'success');
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        duplicateObject();
+                        break;
+                    case 'c':
+                        if (currentVersion === 'v1.0' && selected) {
+                            e.preventDefault();
+                            copyStyle();
+                        }
+                        break;
+                    case 'v':
+                        if (currentVersion === 'v1.0' && selected && copiedStyle) {
+                            e.preventDefault();
+                            pasteStyle();
+                        }
+                        break;
+                }
+            } else if (e.key === 'Delete' && selected) {
+                deleteObject();
+            }
+        });
+
+        // Top bar buttons
+        document.getElementById('btn-undo').addEventListener('click', undo);
+        document.getElementById('btn-redo').addEventListener('click', redo);
+
+        document.getElementById('btn-new').addEventListener('click', () => {
+            if (confirm('Create new project? This will clear the current canvas.')) {
+                objects.forEach(obj => scene.remove(obj));
+                objects.length = 0;
+                selected = null;
+                clearProperties();
+                history = [];
+                historyIndex = -1;
+                saveState();
+                showNotification('New project created', 'success');
+            }
+        });
+
+        document.getElementById('btn-save').addEventListener('click', () => {
+            const projectData = {
+                version: currentVersion,
+                objects: objects.map(obj => ({
+                    id: obj.userData.id,
+                    type: obj.userData.type,
+                    position: obj.position.toArray(),
+                    rotation: obj.rotation.toArray(),
+                    scale: obj.scale.toArray(),
+                    text: obj.userData.text || '',
+                    options: obj.userData.options || {},
+                    opacity: obj.material.opacity || 1
+                }))
+            };
+
+            const blob = new Blob([JSON.stringify(projectData, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'maxEdit-project.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showNotification('Project saved successfully!', 'success');
+        });
+
+        // Canvas preset and size controls
+        canvasPresetSelector.addEventListener('change', (e) => {
+            if (e.target.value) {
+                applyCanvasPreset(e.target.value);
+            }
+        });
+
+        canvasWidthInput.addEventListener('input', () => {
+            updateCanvasSize(parseInt(canvasWidthInput.value), parseInt(canvasHeightInput.value));
+        });
+
+        canvasHeightInput.addEventListener('input', () => {
+            updateCanvasSize(parseInt(canvasWidthInput.value), parseInt(canvasHeightInput.value));
+        });
+
+        canvasBackgroundInput.addEventListener('change', updateCanvasBackground);
+
+        document.getElementById('center-content').addEventListener('click', centerAllContent);
+        document.getElementById('fit-content').addEventListener('click', fitContentToCanvas);
+
+        // Background and border "None" buttons
+        document.getElementById('bg-none-btn').addEventListener('click', () => {
+            if (selected && selected.userData.type === 'text') {
+                selected.userData.options.bg = 'transparent';
+                propBgColor.value = '#000000'; // Reset color picker to default
+                updateTextProperties();
+                showNotification('Background removed', 'success');
+            }
+        });
+
+        document.getElementById('border-none-btn').addEventListener('click', () => {
+            if (selected && selected.userData.type === 'text') {
+                selected.userData.options.border = 'transparent';
+                selected.userData.options.borderWidth = 0;
+                propBorderColor.value = '#ff0000'; // Reset color picker to default
+                propBorderWidth.value = 0;
+                updateTextProperties();
+                showNotification('Border removed', 'success');
+            }
+        });
+    </script>
+</body>
+</html>
