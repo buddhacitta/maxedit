@@ -96,63 +96,33 @@ header .title {
   gap: 15px;
 }
 
-.logo-text {
-  font-size: 1.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  position: relative;
-  cursor: pointer;
-  display: inline-flex;
-  animation: logoFloat 6s ease-in-out infinite;
-}
+.logo {
+            font-family: var(--font-primary);
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            background: linear-gradient(45deg, 
+                var(--primary-cyan), 
+                var(--primary-purple), 
+                var(--primary-red), 
+                var(--primary-green),
+                var(--primary-orange),
+                var(--primary-pink),
+                var(--primary-cyan)
+            );
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: infinityColors 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+        }
 
-@keyframes logoFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-3px); }
-}
-
-.logo-letter {
-  display: inline-block;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  background: linear-gradient(45deg, #00f0ff, #0ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  position: relative;
-}
-
-.logo-letter::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: inherit;
-  opacity: 0;
-  filter: blur(8px);
-  transition: opacity 0.3s ease;
-}
-
-.logo-letter.animate {
-  transform: scale(1.4) translateY(-8px) rotateZ(5deg);
-  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  filter: drop-shadow(0 0 15px rgba(255, 107, 107, 0.8));
-  animation: letterPulse 0.6s ease-in-out;
-}
-
-.logo-letter.animate::after {
-  opacity: 0.6;
-}
-
-@keyframes letterPulse {
-  0%, 100% { transform: scale(1.4) translateY(-8px) rotateZ(5deg); }
-  50% { transform: scale(1.6) translateY(-12px) rotateZ(-5deg); }
-}
-
+        @keyframes infinityColors {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 .version-display {
   background: transparent;
   border: 1px solid var(--primary-glow);
@@ -316,6 +286,10 @@ header button:active {
   gap: 0.6rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   overflow-x: auto;
+  overflow-y: hidden;
+  height: 100%;
+  min-height: 60px;
+  max-height: 60px;
 }
 
 .control-btn {
@@ -542,18 +516,62 @@ main.canvas {
 aside.properties {
   grid-area: properties;
   background: var(--panel-bg);
-  padding: 1.5rem;
+  padding: 0;
   border-left: 2px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   font-size: 0.9rem;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-  max-height: calc(100vh - 200px);
+  height: 100%;
 }
 
-aside.properties h2 {
+/* === SECTION TOGGLERS === */
+.section-togglers {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-dark);
+}
+
+.section-toggle {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--accent-color);
+  padding: 12px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 3px solid transparent;
+}
+
+.section-toggle:hover {
+  background: var(--hover-bg);
+  color: var(--primary-glow);
+}
+
+.section-toggle.active {
+  background: var(--primary-glow);
+  color: var(--bg-dark);
+  border-bottom-color: var(--primary-glow);
+}
+
+/* === SECTION CONTENT === */
+.section-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: none;
+}
+
+.section-content.active {
+  display: block;
+}
+
+.section-content h2 {
   color: var(--primary-glow);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -767,6 +785,11 @@ aside.properties h2 {
 
   .property-line label {
     text-align: left;
+  }
+
+  .section-toggle {
+    font-size: 0.65rem;
+    padding: 10px 6px;
   }
 }
 
@@ -1004,152 +1027,142 @@ aside.properties h2 {
 
  <!-- PROPERTIES PANEL -->
  <aside class="properties" aria-label="Properties Panel">
-   <h2>Canvas Settings</h2>
-   <div class="property-line">
-     <label for="canvas-width">Width</label>
-     <input type="number" id="canvas-width" min="100" max="8000" value="1080" />
-   </div>
-   <div class="property-line">
-     <label for="canvas-height">Height</label>
-     <input type="number" id="canvas-height" min="100" max="8000" value="1080" />
-   </div>
-   <div class="property-line">
-     <label for="canvas-background">Background</label>
-     <input type="color" id="canvas-background" value="#14141a" />
-   </div>
-   <div class="property-buttons">
-     <button class="property-btn" id="center-content">Center All</button>
-     <button class="property-btn" id="fit-content">Fit Content</button>
+   <!-- Section Togglers -->
+   <div class="section-togglers">
+     <button class="section-toggle active" data-section="canvas">Canvas Settings</button>
+     <button class="section-toggle" data-section="basic">Basic Edit</button>
+     <button class="section-toggle" data-section="advanced">Advanced Edit</button>
    </div>
 
-   <h2>View Controls</h2>
-   <div class="property-line">
-  <label>Canvas Size</label>
-  <div id="canvas-size-display" style="color: var(--accent-color); font-weight: 600;">1080 × 1080 (1:1)</div>
-</div>
-<div class="property-line">
-  <label>Canvas Zoom</label>
-  <div id="canvas-zoom-display" style="color: var(--accent-color); font-weight: 600;">100%</div>
-</div>
-   <div class="property-buttons">
-     <button class="property-btn" id="zoom-out" title="Zoom Out">− Zoom Out</button>
-     <button class="property-btn" id="zoom-in" title="Zoom In">+ Zoom In</button>
-   </div>
-   <div class="property-line">
-     <label>Zoom Level</label>
-     <div id="zoom-level" style="color: var(--accent-color); font-weight: 600;">100%</div>
-   </div>
-   <div class="property-buttons">
-     <button class="property-btn" id="zoom-reset" title="Reset Zoom">⌂ Reset Zoom</button>
-   </div>
-
-   <div class="animations-section">
-     <h2>🎬 Object Animations</h2>
-     <div class="property-buttons">
-       <button class="animation-btn" id="anim-spin">🌀 Spin</button>
-       <button class="animation-btn" id="anim-bounce">⬆️ Bounce</button>
+   <!-- Canvas Settings Section -->
+   <div class="section-content active" id="canvas-section">
+     <h2>Canvas Settings</h2>
+     <div class="property-line">
+       <label for="canvas-width">Width</label>
+       <input type="number" id="canvas-width" min="100" max="8000" value="1080" />
+     </div>
+     <div class="property-line">
+       <label for="canvas-height">Height</label>
+       <input type="number" id="canvas-height" min="100" max="8000" value="1080" />
+     </div>
+     <div class="property-line">
+       <label for="canvas-background">Background</label>
+       <input type="color" id="canvas-background" value="#14141a" />
      </div>
      <div class="property-buttons">
-       <button class="animation-btn" id="anim-pulse">💓 Pulse</button>
-       <button class="animation-btn" id="anim-float">🎈 Float</button>
-     </div>
-     <div class="property-buttons">
-       <button class="animation-btn" id="anim-wobble">🌊 Wobble</button>
-       <button class="animation-btn" id="anim-flip">🔄 Flip</button>
+       <button class="property-btn" id="center-content">Center All</button>
+       <button class="property-btn" id="fit-content">Fit Content</button>
      </div>
    </div>
 
-   <h2>Element Properties</h2>
-   <div class="property-line">
-     <label for="prop-name">Name</label>
-     <input type="text" id="prop-name" placeholder="Element name" />
-   </div>
-   <div class="property-line">
-     <label for="prop-x">X Position</label>
-     <input type="range" id="prop-x" min="-5" max="5" step="0.01" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-y">Y Position</label>
-     <input type="range" id="prop-y" min="-5" max="5" step="0.01" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-z">Z Position</label>
-     <input type="range" id="prop-z" min="-5" max="5" step="0.01" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-rotate-x">Rotate X</label>
-     <input type="range" id="prop-rotate-x" min="-180" max="180" step="1" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-rotate-y">Rotate Y</label>
-     <input type="range" id="prop-rotate-y" min="-180" max="180" step="1" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-rotate-z">Rotate Z</label>
-     <input type="range" id="prop-rotate-z" min="-180" max="180" step="1" value="0" />
-   </div>
-   <div class="property-line">
-     <label for="prop-scale">Scale</label>
-     <input type="range" id="prop-scale" min="0.1" max="3" step="0.01" value="1" />
-   </div>
-   <div class="property-line">
-     <label for="prop-opacity">Opacity</label>
-     <input type="range" id="prop-opacity" min="0" max="100" step="1" value="100" />
+   <!-- Basic Edit Section -->
+   <div class="section-content" id="basic-section">
+     <h2>Element Properties</h2>
+     <div class="property-line">
+       <label for="prop-name">Name</label>
+       <input type="text" id="prop-name" placeholder="Element name" />
+     </div>
+     <div class="property-line">
+       <label for="prop-x">X Position</label>
+       <input type="range" id="prop-x" min="-5" max="5" step="0.01" value="0" />
+     </div>
+     <div class="property-line">
+       <label for="prop-y">Y Position</label>
+       <input type="range" id="prop-y" min="-5" max="5" step="0.01" value="0" />
+     </div>
+     <div class="property-line">
+       <label for="prop-z">Z Position</label>
+       <input type="range" id="prop-z" min="-5" max="5" step="0.01" value="0" />
+     </div>
+     <div class="property-line">
+       <label for="prop-scale">Scale</label>
+       <input type="range" id="prop-scale" min="0.1" max="3" step="0.01" value="1" />
+     </div>
+     <div class="property-line">
+       <label for="prop-opacity">Opacity</label>
+       <input type="range" id="prop-opacity" min="0" max="100" step="1" value="100" />
+     </div>
+
+     <div class="property-line" id="text-content-line" style="display: none;">
+       <label for="prop-text">Text</label>
+       <input type="text" id="prop-text" />
+     </div>
+     <div class="property-line" id="text-size-line" style="display: none;">
+       <label for="prop-text-size">Font Size</label>
+       <input type="range" id="prop-text-size" min="10" max="100" step="1" value="32" />
+     </div>
+     <div class="property-line" id="main-color-line" style="display: none;">
+       <label for="prop-main-color">Color</label>
+       <input type="color" id="prop-main-color" value="#00ffff" />
+     </div>
+     <div class="property-line" id="bg-color-line" style="display: none;">
+       <label for="prop-bg-color">Background</label>
+       <input type="color" id="prop-bg-color" value="#000000" />
+     </div>
+     <div class="property-line" id="bg-none-line" style="display: none;">
+       <label></label>
+       <button class="property-btn" id="bg-none-btn">No Background</button>
+     </div>
+
+     <h2>Object Controls</h2>
+     <div class="property-buttons">
+       <button class="property-btn" id="duplicate-object">⧉ Duplicate</button>
+       <button class="property-btn" id="delete-object">🗑️ Delete</button>
+     </div>
    </div>
 
-   <div class="property-line" id="text-content-line" style="display: none;">
-     <label for="prop-text">Text</label>
-     <input type="text" id="prop-text" />
-   </div>
-   <div class="property-line" id="text-size-line" style="display: none;">
-     <label for="prop-text-size">Font Size</label>
-     <input type="range" id="prop-text-size" min="10" max="100" step="1" value="32" />
-   </div>
-   <div class="property-line" id="text-weight-line" style="display: none;">
-     <label for="prop-text-weight">Font Weight</label>
-     <select id="prop-text-weight">
-       <option value="normal">Normal</option>
-       <option value="bold">Bold</option>
-       <option value="lighter">Light</option>
-     </select>
-   </div>
-   <div class="property-line" id="main-color-line" style="display: none;">
-     <label for="prop-main-color">Color</label>
-     <input type="color" id="prop-main-color" value="#00ffff" />
-   </div>
-   <div class="property-line" id="bg-color-line" style="display: none;">
-     <label for="prop-bg-color">Background</label>
-     <input type="color" id="prop-bg-color" value="#000000" />
-   </div>
-   <div class="property-line" id="border-color-line" style="display: none;">
-     <label for="prop-border-color">Border Color</label>
-     <input type="color" id="prop-border-color" value="#ff0000" />
-   </div>
-   <div class="property-line" id="border-width-line" style="display: none;">
-     <label for="prop-border-width">Border Width</label>
-     <input type="range" id="prop-border-width" min="0" max="20" step="1" value="2" />
-   </div>
-   <div class="property-line" id="border-radius-line" style="display: none;">
-     <label for="prop-border-radius">Border Radius</label>
-     <input type="range" id="prop-border-radius" min="0" max="50" step="1" value="10" />
-   </div>
-   <div class="property-line" id="image-brightness-line" style="display: none;">
-     <label for="prop-image-brightness">Brightness</label>
-     <input type="range" id="prop-image-brightness" min="0" max="200" step="1" value="100" />
-   </div>
-   <div class="property-line" id="image-contrast-line" style="display: none;">
-     <label for="prop-image-contrast">Contrast</label>
-     <input type="range" id="prop-image-contrast" min="0" max="200" step="1" value="100" />
-   </div>
-   <div class="property-line" id="image-saturation-line" style="display: none;">
-     <label for="prop-image-saturation">Saturation</label>
-     <input type="range" id="prop-image-saturation" min="0" max="200" step="1" value="100" />
-   </div>
+   <!-- Advanced Edit Section -->
+   <div class="section-content" id="advanced-section">
+     <h2>Advanced Properties</h2>
+     <div class="property-line">
+       <label for="prop-rotate-x">Rotate X</label>
+       <input type="range" id="prop-rotate-x" min="-180" max="180" step="1" value="0" />
+     </div>
+     <div class="property-line">
+       <label for="prop-rotate-y">Rotate Y</label>
+       <input type="range" id="prop-rotate-y" min="-180" max="180" step="1" value="0" />
+     </div>
+     <div class="property-line">
+       <label for="prop-rotate-z">Rotate Z</label>
+       <input type="range" id="prop-rotate-z" min="-180" max="180" step="1" value="0" />
+     </div>
 
-   <h2>Object Controls</h2>
-   <div class="property-buttons">
-     <button class="property-btn" id="duplicate-object">⧉ Duplicate</button>
-     <button class="property-btn" id="delete-object">🗑️ Delete</button>
+     <div class="property-line" id="text-weight-line" style="display: none;">
+       <label for="prop-text-weight">Font Weight</label>
+       <select id="prop-text-weight">
+         <option value="normal">Normal</option>
+         <option value="bold">Bold</option>
+         <option value="lighter">Light</option>
+       </select>
+     </div>
+     <div class="property-line" id="border-color-line" style="display: none;">
+       <label for="prop-border-color">Border Color</label>
+       <input type="color" id="prop-border-color" value="#ff0000" />
+     </div>
+     <div class="property-line" id="border-width-line" style="display: none;">
+       <label for="prop-border-width">Border Width</label>
+       <input type="range" id="prop-border-width" min="0" max="20" step="1" value="2" />
+     </div>
+     <div class="property-line" id="border-radius-line" style="display: none;">
+       <label for="prop-border-radius">Border Radius</label>
+       <input type="range" id="prop-border-radius" min="0" max="50" step="1" value="10" />
+     </div>
+     <div class="property-line" id="border-none-line" style="display: none;">
+       <label></label>
+       <button class="property-btn" id="border-none-btn">No Border</button>
+     </div>
+     <div class="property-line" id="image-brightness-line" style="display: none;">
+       <label for="prop-image-brightness">Brightness</label>
+       <input type="range" id="prop-image-brightness" min="0" max="200" step="1" value="100" />
+     </div>
+     <div class="property-line" id="image-contrast-line" style="display: none;">
+       <label for="prop-image-contrast">Contrast</label>
+       <input type="range" id="prop-image-contrast" min="0" max="200" step="1" value="100" />
+     </div>
+     <div class="property-line" id="image-saturation-line" style="display: none;">
+       <label for="prop-image-saturation">Saturation</label>
+       <input type="range" id="prop-image-saturation" min="0" max="200" step="1" value="100" />
+     </div>
    </div>
  </aside>
 
@@ -1250,8 +1263,6 @@ const canvasPresetSelector = document.getElementById('canvas-preset');
 const canvasWidthInput = document.getElementById('canvas-width');
 const canvasHeightInput = document.getElementById('canvas-height');
 const canvasBackgroundInput = document.getElementById('canvas-background');
-const canvasSizeDisplay = document.getElementById('canvas-size-display');
-const canvasZoomDisplay = document.getElementById('canvas-zoom-display');
 const canvasRatioIndicator = document.getElementById('canvas-ratio-indicator');
 
 // Version controls
@@ -1298,8 +1309,26 @@ const propImageContrast = document.getElementById('prop-image-contrast');
 const propImageSaturation = document.getElementById('prop-image-saturation');
 
 // UI elements
-const zoomLevel = document.getElementById('zoom-level');
 const loading = document.getElementById('loading');
+
+// === SECTION MANAGEMENT ===
+function switchSection(sectionName) {
+  // Hide all sections
+  document.querySelectorAll('.section-content').forEach(section => {
+    section.classList.remove('active');
+  });
+  
+  // Remove active class from all toggles
+  document.querySelectorAll('.section-toggle').forEach(toggle => {
+    toggle.classList.remove('active');
+  });
+  
+  // Show selected section
+  document.getElementById(sectionName + '-section').classList.add('active');
+  
+  // Add active class to selected toggle
+  document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+}
 
 // === LOGO ANIMATION ===
 class LogoAnimator {
@@ -1375,82 +1404,6 @@ class LogoAnimator {
   }
 }
 
-// === OBJECT ANIMATION SYSTEM ===
-class ObjectAnimator {
-  constructor() {
-    this.activeAnimations = new Map();
-  }
-
-  animate(object, type, duration = 3000) {
-    // Stop existing animation if any
-    this.stopAnimation(object);
-
-    const startTime = Date.now();
-    const originalTransform = {
-      position: object.position.clone(),
-      rotation: object.rotation.clone(),
-      scale: object.scale.clone()
-    };
-
-    const animationId = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const progress = elapsed / duration;
-
-      if (progress >= 1) {
-        this.stopAnimation(object);
-        return;
-      }
-
-      switch(type) {
-        case 'spin':
-          object.rotation.y = originalTransform.rotation.y + (progress * Math.PI * 4);
-          break;
-        case 'bounce':
-          object.position.y = originalTransform.position.y + Math.abs(Math.sin(progress * Math.PI * 8)) * 0.5;
-          break;
-        case 'pulse':
-          const scale = 1 + Math.sin(progress * Math.PI * 8) * 0.3;
-          object.scale.setScalar(scale);
-          break;
-        case 'float':
-          object.position.y = originalTransform.position.y + Math.sin(progress * Math.PI * 4) * 0.3;
-          object.rotation.y = originalTransform.rotation.y + progress * Math.PI * 2;
-          break;
-        case 'wobble':
-          object.rotation.z = originalTransform.rotation.z + Math.sin(progress * Math.PI * 12) * 0.2;
-          break;
-        case 'flip':
-          object.rotation.x = originalTransform.rotation.x + (progress * Math.PI * 2);
-          break;
-      }
-    }, 16); // ~60fps
-
-    this.activeAnimations.set(object, {
-      id: animationId,
-      type: type,
-      originalTransform: originalTransform
-    });
-  }
-
-  stopAnimation(object) {
-    const animation = this.activeAnimations.get(object);
-    if (animation) {
-      clearInterval(animation.id);
-      // Reset to original transform
-      object.position.copy(animation.originalTransform.position);
-      object.rotation.copy(animation.originalTransform.rotation);
-      object.scale.copy(animation.originalTransform.scale);
-      this.activeAnimations.delete(object);
-    }
-  }
-
-  stopAllAnimations() {
-    this.activeAnimations.forEach((animation, object) => {
-      this.stopAnimation(object);
-    });
-  }
-}
-
 // === VERSION MANAGEMENT ===
 function switchVersion(version) {
   currentVersion = version;
@@ -1503,9 +1456,8 @@ function disableBetaFeatures() {
 init();
 animate();
 
-// Initialize logo animator and object animator
+// Initialize logo animator
 const logoAnimator = new LogoAnimator();
-const objectAnimator = new ObjectAnimator();
 
 // === DRAG SYSTEM ===
 let isDragging = false;
@@ -1580,9 +1532,6 @@ function onMouseDown(e) {
     
     // Change cursor to indicate dragging
     canvas.style.cursor = 'grabbing';
-    
-    // Stop any active animations on the object being dragged
-    objectAnimator.stopAnimation(dragObject);
     
   } else {
     // Clicked on empty space - deselect
@@ -1956,7 +1905,8 @@ function hideAllPropertyLines() {
     'text-content-line', 'text-size-line', 'text-weight-line',
     'main-color-line', 'bg-color-line', 'border-color-line',
     'border-width-line', 'border-radius-line',
-    'image-brightness-line', 'image-contrast-line', 'image-saturation-line'
+    'image-brightness-line', 'image-contrast-line', 'image-saturation-line',
+    'bg-none-line', 'border-none-line'
   ];
   lines.forEach(id => {
     const element = document.getElementById(id);
@@ -1983,6 +1933,8 @@ function showTextProperties() {
   document.getElementById('border-color-line').style.display = 'grid';
   document.getElementById('border-width-line').style.display = 'grid';
   document.getElementById('border-radius-line').style.display = 'grid';
+  document.getElementById('bg-none-line').style.display = 'grid';
+  document.getElementById('border-none-line').style.display = 'grid';
 }
 
 function showImageProperties() {
@@ -2117,8 +2069,6 @@ function updateCanvasSize(width, height) {
 
 function updateCanvasDisplay() {
   const ratio = calculateRatio(currentCanvasWidth, currentCanvasHeight);
-  canvasSizeDisplay.textContent = `${currentCanvasWidth} × ${currentCanvasHeight} (${ratio})`;
-  canvasZoomDisplay.textContent = `${Math.round(canvasScale * 100)}%`;
   canvasRatioIndicator.textContent = ratio;
 }
 
@@ -2291,9 +2241,6 @@ function deleteObject() {
     return;
   }
 
-  // Stop any active animations
-  objectAnimator.stopAnimation(selected);
-
   scene.remove(selected);
   const index = objects.indexOf(selected);
   if (index > -1) {
@@ -2308,6 +2255,14 @@ function deleteObject() {
 }
 
 // === EVENT LISTENERS ===
+
+// Section togglers
+document.querySelectorAll('.section-toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    const section = toggle.dataset.section;
+    switchSection(section);
+  });
+});
 
 // Version dropdown
 versionDisplay.addEventListener('click', (e) => {
@@ -2416,61 +2371,6 @@ fileImageInput.addEventListener('change', (e) => {
   }
 });
 
-// Animation buttons
-document.getElementById('anim-spin').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'spin');
-    showNotification('Spin animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
-document.getElementById('anim-bounce').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'bounce');
-    showNotification('Bounce animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
-document.getElementById('anim-pulse').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'pulse');
-    showNotification('Pulse animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
-document.getElementById('anim-float').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'float');
-    showNotification('Float animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
-document.getElementById('anim-wobble').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'wobble');
-    showNotification('Wobble animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
-document.getElementById('anim-flip').addEventListener('click', () => {
-  if (selected) {
-    objectAnimator.animate(selected, 'flip');
-    showNotification('Flip animation applied', 'success');
-  } else {
-    showNotification('Please select an object first', 'error');
-  }
-});
-
 // Object control buttons
 document.getElementById('duplicate-object').addEventListener('click', duplicateObject);
 document.getElementById('delete-object').addEventListener('click', deleteObject);
@@ -2511,7 +2411,6 @@ document.getElementById('btn-redo').addEventListener('click', redo);
 
 document.getElementById('btn-new').addEventListener('click', () => {
   if (confirm('Create new project? This will clear the current canvas.')) {
-    objectAnimator.stopAllAnimations();
     objects.forEach(obj => scene.remove(obj));
     objects.length = 0;
     selected = null;
@@ -2549,22 +2448,6 @@ document.getElementById('btn-save').addEventListener('click', () => {
   showNotification('Project saved successfully!', 'success');
 });
 
-// Zoom controls (camera controls)
-document.getElementById('zoom-in').addEventListener('click', () => {
-  camera.position.z = Math.max(0.5, camera.position.z - 0.2);
-  zoomLevel.textContent = Math.round((3 / camera.position.z) * 100) + '%';
-});
-
-document.getElementById('zoom-out').addEventListener('click', () => {
-  camera.position.z = Math.min(10, camera.position.z + 0.2);
-  zoomLevel.textContent = Math.round((3 / camera.position.z) * 100) + '%';
-});
-
-document.getElementById('zoom-reset').addEventListener('click', () => {
-  camera.position.z = 3;
-  zoomLevel.textContent = '100%';
-});
-
 // Canvas preset and size controls
 canvasPresetSelector.addEventListener('change', (e) => {
   if (e.target.value) {
@@ -2584,6 +2467,27 @@ canvasBackgroundInput.addEventListener('change', updateCanvasBackground);
 
 document.getElementById('center-content').addEventListener('click', centerAllContent);
 document.getElementById('fit-content').addEventListener('click', fitContentToCanvas);
+
+// Background and border "None" buttons
+document.getElementById('bg-none-btn').addEventListener('click', () => {
+  if (selected && selected.userData.type === 'text') {
+    selected.userData.options.bg = 'transparent';
+    propBgColor.value = '#000000'; // Reset color picker to default
+    updateTextProperties();
+    showNotification('Background removed', 'success');
+  }
+});
+
+document.getElementById('border-none-btn').addEventListener('click', () => {
+  if (selected && selected.userData.type === 'text') {
+    selected.userData.options.border = 'transparent';
+    selected.userData.options.borderWidth = 0;
+    propBorderColor.value = '#ff0000'; // Reset color picker to default
+    propBorderWidth.value = 0;
+    updateTextProperties();
+    showNotification('Border removed', 'success');
+  }
+});
  </script>
 </body>
 </html>
