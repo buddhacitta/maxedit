@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visgen - AI Visual Creator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <span class="logo">maxEdit</span>
+            <span class="version">v-1</span>
+            <a href="https://buddhacitta.github.io/fortofolio" target="_blank" class="author">by Buddha Citta</a>
+        </div>
+        <div class="nav-right">
+            <button class="nav-btn" id="exportBtn">Export</button>
+            <button class="nav-btn" id="profileBtn">Profile</button>
+            <div class="theme-switcher">
+                <button class="theme-btn" id="themeBtn">Dark</button>
+                <div class="theme-dropdown" id="themeDropdown">
+                    <div class="theme-option" data-theme="light">Light</div>
+                    <div class="theme-option" data-theme="dark">Dark</div>
+                    <div class="theme-option" data-theme="heaven">Heaven</div>
+                    <div class="theme-option" data-theme="night">Night</div>
+                    <div class="theme-option" data-theme="deep-sea">Deep Sea</div>
+                    <div class="theme-option" data-theme="lights">Lights</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Editor Container -->
+    <div class="editor-container">
+        <!-- Top Inner Bar -->
+        <div class="top-inner-bar">
+            <div class="media-controls">
+                <button class="media-btn" id="addImageBtn">
+                    <span class="icon">🖼️</span>
+                    Add Image
+                </button>
+                <button class="media-btn" id="addTextBtn">
+                    <span class="icon">📝</span>
+                    Add Text
+                </button>
+                <button class="media-btn beta" id="addVideoBtn">
+                    <span class="icon">🎥</span>
+                    Add Video
+                    <span class="beta-tag">Beta Upcoming</span>
+                </button>
+            </div>
+            
+            <div class="canvas-ratios">
+                <select id="canvasRatio">
+                    <option value="1:1">Instagram Square (1:1)</option>
+                    <option value="4:5">Instagram Portrait (4:5)</option>
+                    <option value="16:9">YouTube Thumbnail (16:9)</option>
+                    <option value="9:16">Instagram Story (9:16)</option>
+                    <option value="1.91:1">Facebook Cover (1.91:1)</option>
+                    <option value="16:10">Desktop Wallpaper (16:10)</option>
+                    <option value="3:2">Photography (3:2)</option>
+                    <option value="4:3">Standard Display (4:3)</option>
+                    <option value="21:9">Ultrawide (21:9)</option>
+                    <option value="1:2">Pinterest Pin (1:2)</option>
+                    <option value="1200:630">Facebook Post (1200:630)</option>
+                    <option value="1024:512">Twitter Header (1024:512)</option>
+                    <option value="1080:1920">TikTok (1080:1920)</option>
+                    <option value="1280:720">HD Video (1280:720)</option>
+                    <option value="1920:1080">Full HD (1920:1080)</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            
+            <div class="live-css">
+                <button class="preset-btn" id="presetBtn">Preset Edits</button>
+                <button class="css-btn" id="liveCssBtn">Live CSS</button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Canvas Area -->
+            <div class="canvas-area">
+                <canvas id="glcanvas" width="800" height="600"></canvas>
+                <div class="canvas-overlay">
+                    <div class="canvas-info">
+                        <span id="canvasSize">800 x 600</span>
+                        <span id="canvasRatioDisplay">4:3</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="sidebar">
+                <!-- Edit Mode Toggle -->
+                <div class="edit-mode-toggle">
+                    <button class="mode-btn active" id="basicModeBtn">Basic Edit</button>
+                    <button class="mode-btn" id="advancedModeBtn">Advanced Edit</button>
+                </div>
+
+                <!-- Basic Editing Section -->
+                <div class="sidebar-section" id="basicEditSection">
+                    <h3>Basic Editing</h3>
+                    <div class="control-group">
+                        <label>Position</label>
+                        <div class="control-row">
+                            <input type="number" id="posX" placeholder="X" value="0">
+                            <input type="number" id="posY" placeholder="Y" value="0">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Size</label>
+                        <div class="control-row">
+                            <input type="number" id="width" placeholder="Width" value="100">
+                            <input type="number" id="height" placeholder="Height" value="100">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Rotation</label>
+                        <input type="range" id="rotation" min="0" max="360" value="0">
+                        <span id="rotationValue">0°</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Opacity</label>
+                        <input type="range" id="opacity" min="0" max="1" step="0.1" value="1">
+                        <span id="opacityValue">100%</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Background</label>
+                        <input type="color" id="bgColor" value="#ffffff">
+                        <select id="bgType">
+                            <option value="solid">Solid</option>
+                            <option value="gradient">Gradient</option>
+                            <option value="image">Image</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Border</label>
+                        <div class="control-row">
+                            <input type="number" id="borderWidth" placeholder="Width" value="0">
+                            <input type="color" id="borderColor" value="#000000">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Shadow</label>
+                        <div class="control-row">
+                            <input type="number" id="shadowX" placeholder="X" value="0">
+                            <input type="number" id="shadowY" placeholder="Y" value="0">
+                            <input type="number" id="shadowBlur" placeholder="Blur" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Styling Section -->
+                <div class="sidebar-section" id="textEditSection">
+                    <h3>Text Styling</h3>
+                    <div class="control-group">
+                        <label>Font Family</label>
+                        <select id="fontFamily">
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Font Size</label>
+                        <input type="number" id="fontSize" placeholder="Size" value="16">
+                    </div>
+                    <div class="control-group">
+                        <label>Font Style</label>
+                        <div class="control-row">
+                            <button class="style-btn" id="boldBtn">B</button>
+                            <button class="style-btn" id="italicBtn">I</button>
+                            <button class="style-btn" id="underlineBtn">U</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Text Color</label>
+                        <input type="color" id="textColor" value="#000000">
+                    </div>
+                    <div class="control-group">
+                        <label>Text Align</label>
+                        <select id="textAlign">
+                            <option value="left">Left</option>
+                            <option value="center">Center</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Advanced 3D Editing Section -->
+                <div class="sidebar-section" id="advancedEditSection" style="display: none;">
+                    <h3>3D Transform</h3>
+                    <div class="control-group">
+                        <label>3D Position</label>
+                        <div class="control-row">
+                            <input type="number" id="pos3DX" placeholder="X" value="0" step="0.1">
+                            <input type="number" id="pos3DY" placeholder="Y" value="0" step="0.1">
+                            <input type="number" id="pos3DZ" placeholder="Z" value="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>3D Rotation</label>
+                        <div class="control-row">
+                            <input type="range" id="rotateX" min="-180" max="180" value="0">
+                            <span id="rotateXValue">0°</span>
+                        </div>
+                        <div class="control-row">
+                            <input type="range" id="rotateY" min="-180" max="180" value="0">
+                            <span id="rotateYValue">0°</span>
+                        </div>
+                        <div class="control-row">
+                            <input type="range" id="rotateZ" min="-180" max="180" value="0">
+                            <span id="rotateZValue">0°</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>3D Scale</label>
+                        <div class="control-row">
+                            <input type="number" id="scaleX" placeholder="X" value="1" step="0.1">
+                            <input type="number" id="scaleY" placeholder="Y" value="1" step="0.1">
+                            <input type="number" id="scaleZ" placeholder="Z" value="1" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <h3>Camera Controls</h3>
+                    <div class="control-group">
+                        <label>Camera Position</label>
+                        <div class="control-row">
+                            <input type="number" id="cameraX" placeholder="X" value="0" step="0.1">
+                            <input type="number" id="cameraY" placeholder="Y" value="0" step="0.1">
+                            <input type="number" id="cameraZ" placeholder="Z" value="5" step="0.1">
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label>Field of View</label>
+                        <input type="range" id="fov" min="10" max="120" value="75">
+                        <span id="fovValue">75°</span>
+                    </div>
+                    
+                    <h3>Lighting</h3>
+                    <div class="control-group">
+                        <label>Light Color</label>
+                        <input type="color" id="lightColor" value="#ffffff">
+                    </div>
+                    <div class="control-group">
+                        <label>Light Intensity</label>
+                        <input type="range" id="lightIntensity" min="0" max="3" step="0.1" value="1">
+                        <span id="lightIntensityValue">1.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Light Position</label>
+                        <div class="control-row">
+                            <input type="number" id="lightX" placeholder="X" value="10" step="0.1">
+                            <input type="number" id="lightY" placeholder="Y" value="10" step="0.1">
+                            <input type="number" id="lightZ" placeholder="Z" value="10" step="0.1">
+                        </div>
+                    </div>
+                    
+                    <h3>Material Properties</h3>
+                    <div class="control-group">
+                        <label>Material Type</label>
+                        <select id="materialType">
+                            <option value="basic">Basic</option>
+                            <option value="lambert">Lambert</option>
+                            <option value="phong">Phong</option>
+                            <option value="standard">Standard</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Metalness</label>
+                        <input type="range" id="metalness" min="0" max="1" step="0.1" value="0">
+                        <span id="metalnessValue">0.0</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Roughness</label>
+                        <input type="range" id="roughness" min="0" max="1" step="0.1" value="0.5">
+                        <span id="roughnessValue">0.5</span>
+                    </div>
+                    
+                    <h3>Effects</h3>
+                    <div class="control-group">
+                        <label>Wireframe</label>
+                        <input type="checkbox" id="wireframe">
+                    </div>
+                    <div class="control-group">
+                        <label>Cast Shadow</label>
+                        <input type="checkbox" id="castShadow">
+                    </div>
+                    <div class="control-group">
+                        <label>Receive Shadow</label>
+                        <input type="checkbox" id="receiveShadow">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preset Edits Modal -->
+    <div class="modal" id="presetModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Preset Edits</h2>
+                <button class="close-btn" id="closePresetModal">&times;</button>
+            </div>
+            <div class="preset-grid">
+                <div class="preset-item" data-preset="modern">
+                    <div class="preset-preview modern-preview"></div>
+                    <span>Modern</span>
+                </div>
+                <div class="preset-item" data-preset="vintage">
+                    <div class="preset-preview vintage-preview"></div>
+                    <span>Vintage</span>
+                </div>
+                <div class="preset-item" data-preset="neon">
+                    <div class="preset-preview neon-preview"></div>
+                    <span>Neon</span>
+                </div>
+                <div class="preset-item" data-preset="minimal">
+                    <div class="preset-preview minimal-preview"></div>
+                    <span>Minimal</span>
+                </div>
+                <div class="preset-item" data-preset="gradient">
+                    <div class="preset-preview gradient-preview"></div>
+                    <span>Gradient</span>
+                </div>
+                <div class="preset-item" data-preset="shadow">
+                    <div class="preset-preview shadow-preview"></div>
+                    <span>Shadow</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Export Your Creation</h2>
+                <button class="close-btn" id="closeExportModal">&times;</button>
+            </div>
+            <div class="export-content">
+                <div class="export-preview">
+                    <canvas id="exportPreview" width="200" height="150"></canvas>
+                </div>
+                <div class="export-options">
+                    <div class="option-group">
+                        <label>Format</label>
+                        <div class="format-options">
+                            <button class="format-btn active" data-format="png">PNG</button>
+                            <button class="format-btn" data-format="jpg">JPG</button>
+                            <button class="format-btn" data-format="jpeg">JPEG</button>
+                            <button class="format-btn" data-format="webp">WEBP</button>
+                            <button class="format-btn disabled" data-format="mp4">MP4</button>
+                            <button class="format-btn disabled" data-format="zip">ZIP</button>
+                            <button class="format-btn disabled" data-format="pdf">PDF</button>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label>Quality</label>
+                        <div class="quality-control">
+                            <input type="range" id="qualitySlider" min="0.1" max="1" step="0.1" value="0.9">
+                            <span id="qualityValue">90%</span>
+                            <label class="max-quality">
+                                <input type="checkbox" id="maxQuality"> Max Quality
+                            </label>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label>Presets</label>
+                        <div class="preset-recommendations">
+                            <button class="preset-rec" data-format="jpg" data-quality="0.8">Social Media (JPG 80%)</button>
+                            <button class="preset-rec" data-format="webp" data-quality="0.6">Web Optimized (WEBP 60%)</button>
+                            <button class="preset-rec" data-format="png" data-quality="1.0">High-Res (PNG 100%)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="export-actions">
+                <button class="export-btn" id="confirmExport">Export Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div class="modal" id="progressModal">
+        <div class="modal-content progress-content">
+            <div class="progress-header">
+                <h3 id="progressMessage">Infusing pixels with energy...</h3>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-percent" id="progressPercent">0%</div>
+        </div>
+    </div>
+
+    <!-- Live CSS Modal -->
+    <div class="modal" id="cssModal">
+        <div class="modal-content css-content">
+            <div class="modal-header">
+                <h2>Live CSS Editor</h2>
+                <button class="close-btn" id="closeCssModal">&times;</button>
+            </div>
+            <div class="css-editor">
+                <textarea id="cssTextarea" placeholder="Enter your CSS here...
+#refer {
+    /* Your styles here */
+}"></textarea>
+                <div class="css-actions">
+                    <button class="css-btn" id="applyCss">Apply CSS</button>
+                    <button class="css-btn" id="resetCss">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Profile</h2>
+                <button class="close-btn" id="closeProfileModal">&times;</button>
+            </div>
+            <div class="profile-content">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <span class="avatar-placeholder">👤</span>
+                    </div>
+                    <div class="profile-details">
+                        <h3>Visual Creator</h3>
+                        <p>Beta User</p>
+                        <div class="premium-badge">Beta Premium - Free Access</div>
+                    </div>
+                </div>
+                <div class="profile-stats">
+                    <div class="stat">
+                        <span class="stat-number" id="creationCount">0</span>
+                        <span class="stat-label">Creations</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number" id="exportCount">0</span>
+                        <span class="stat-label">Exports</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">Beta</span>
+                        <span class="stat-label">Version</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
