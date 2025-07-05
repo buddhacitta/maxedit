@@ -211,17 +211,23 @@ class VisgenEditor {
     }
 
     setupAdvancedControls() {
-        // 3D Position controls
+        // 3D Position controls with improved range system
         document.getElementById('pos3DX').addEventListener('input', (e) => {
-            this.updateElementProperty('pos3DX', parseFloat(e.target.value) || 0);
+            const value = parseFloat(e.target.value) || 0;
+            document.getElementById('pos3DXValue').textContent = value.toFixed(2);
+            this.updateElementProperty('pos3DX', value);
         });
 
         document.getElementById('pos3DY').addEventListener('input', (e) => {
-            this.updateElementProperty('pos3DY', parseFloat(e.target.value) || 0);
+            const value = parseFloat(e.target.value) || 0;
+            document.getElementById('pos3DYValue').textContent = value.toFixed(2);
+            this.updateElementProperty('pos3DY', value);
         });
 
         document.getElementById('pos3DZ').addEventListener('input', (e) => {
-            this.updateElementProperty('pos3DZ', parseFloat(e.target.value) || 0);
+            const value = parseFloat(e.target.value) || 0;
+            document.getElementById('pos3DZValue').textContent = value.toFixed(2);
+            this.updateElementProperty('pos3DZ', value);
         });
 
         // 3D Rotation controls
@@ -243,17 +249,13 @@ class VisgenEditor {
             this.updateElementProperty('rotateZ', value);
         });
 
-        // 3D Scale controls
-        document.getElementById('scaleX').addEventListener('input', (e) => {
-            this.updateElementProperty('scaleX', parseFloat(e.target.value) || 1);
-        });
-
-        document.getElementById('scaleY').addEventListener('input', (e) => {
-            this.updateElementProperty('scaleY', parseFloat(e.target.value) || 1);
-        });
-
-        document.getElementById('scaleZ').addEventListener('input', (e) => {
-            this.updateElementProperty('scaleZ', parseFloat(e.target.value) || 1);
+        // Unified Scale control
+        document.getElementById('scale').addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value) || 1;
+            document.getElementById('scaleValue').textContent = value.toFixed(2);
+            this.updateElementProperty('scaleX', value);
+            this.updateElementProperty('scaleY', value);
+            this.updateElementProperty('scaleZ', value);
         });
 
         // Camera controls
@@ -545,8 +547,11 @@ class VisgenEditor {
         // Check elements in reverse order (top to bottom)
         for (let i = this.elements.length - 1; i >= 0; i--) {
             const element = this.elements[i];
-            if (x >= element.x && x <= element.x + element.width &&
-                y >= element.y && y <= element.y + element.height) {
+            const elementX = element.x + (element.pos3DX || 0);
+            const elementY = element.y + (element.pos3DY || 0);
+            
+            if (x >= elementX && x <= elementX + element.width &&
+                y >= elementY && y <= elementY + element.height) {
                 return element;
             }
         }
@@ -589,8 +594,11 @@ class VisgenEditor {
         // Update advanced 3D controls
         if (this.isAdvancedMode) {
             document.getElementById('pos3DX').value = element.pos3DX || 0;
+            document.getElementById('pos3DXValue').textContent = (element.pos3DX || 0).toFixed(2);
             document.getElementById('pos3DY').value = element.pos3DY || 0;
+            document.getElementById('pos3DYValue').textContent = (element.pos3DY || 0).toFixed(2);
             document.getElementById('pos3DZ').value = element.pos3DZ || 0;
+            document.getElementById('pos3DZValue').textContent = (element.pos3DZ || 0).toFixed(2);
             
             document.getElementById('rotateX').value = element.rotateX || 0;
             document.getElementById('rotateXValue').textContent = (element.rotateX || 0) + '°';
@@ -599,9 +607,9 @@ class VisgenEditor {
             document.getElementById('rotateZ').value = element.rotateZ || 0;
             document.getElementById('rotateZValue').textContent = (element.rotateZ || 0) + '°';
             
-            document.getElementById('scaleX').value = element.scaleX || 1;
-            document.getElementById('scaleY').value = element.scaleY || 1;
-            document.getElementById('scaleZ').value = element.scaleZ || 1;
+            const scale = element.scaleX || 1;
+            document.getElementById('scale').value = scale;
+            document.getElementById('scaleValue').textContent = scale.toFixed(2);
             
             document.getElementById('materialType').value = element.materialType || 'basic';
             document.getElementById('metalness').value = element.metalness || 0;
@@ -639,17 +647,19 @@ class VisgenEditor {
         // Clear advanced controls
         if (this.isAdvancedMode) {
             document.getElementById('pos3DX').value = 0;
+            document.getElementById('pos3DXValue').textContent = '0.00';
             document.getElementById('pos3DY').value = 0;
+            document.getElementById('pos3DYValue').textContent = '0.00';
             document.getElementById('pos3DZ').value = 0;
+            document.getElementById('pos3DZValue').textContent = '0.00';
             document.getElementById('rotateX').value = 0;
             document.getElementById('rotateXValue').textContent = '0°';
             document.getElementById('rotateY').value = 0;
             document.getElementById('rotateYValue').textContent = '0°';
             document.getElementById('rotateZ').value = 0;
             document.getElementById('rotateZValue').textContent = '0°';
-            document.getElementById('scaleX').value = 1;
-            document.getElementById('scaleY').value = 1;
-            document.getElementById('scaleZ').value = 1;
+            document.getElementById('scale').value = 1;
+            document.getElementById('scaleValue').textContent = '1.00';
             document.getElementById('wireframe').checked = false;
             document.getElementById('castShadow').checked = false;
             document.getElementById('receiveShadow').checked = false;
@@ -814,8 +824,8 @@ class VisgenEditor {
         this.ctx.globalAlpha = element.opacity || 1;
         
         // Apply 3D transformations if in advanced mode
-        let transformX = element.x + (element.pos3DX || 0);
-        let transformY = element.y + (element.pos3DY || 0);
+        let transformX = element.x + (element.pos3DX || 0) * 100; // Scale 3D position for 2D canvas
+        let transformY = element.y + (element.pos3DY || 0) * 100;
         
         // Apply 3D scaling
         const scaleX = element.scaleX || 1;
@@ -894,8 +904,8 @@ class VisgenEditor {
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([5, 5]);
         
-        const x = element.x + (element.pos3DX || 0);
-        const y = element.y + (element.pos3DY || 0);
+        const x = element.x + (element.pos3DX || 0) * 100;
+        const y = element.y + (element.pos3DY || 0) * 100;
         
         this.ctx.strokeRect(x - 2, y - 2, element.width + 4, element.height + 4);
         this.ctx.restore();
@@ -1056,7 +1066,9 @@ class VisgenEditor {
                 shadowX: 5,
                 shadowY: 5,
                 shadowBlur: 15,
-                opacity: 0.9
+                opacity: 0.9,
+                scaleX: 1.02,
+                scaleY: 1.02
             },
             vintage: {
                 borderWidth: 3,
@@ -1066,7 +1078,8 @@ class VisgenEditor {
                 shadowBlur: 8,
                 opacity: 0.8,
                 scaleX: 0.95,
-                scaleY: 0.95
+                scaleY: 0.95,
+                rotateZ: -2
             },
             neon: {
                 borderWidth: 3,
@@ -1076,7 +1089,8 @@ class VisgenEditor {
                 shadowBlur: 20,
                 opacity: 1,
                 scaleX: 1.05,
-                scaleY: 1.05
+                scaleY: 1.05,
+                wireframe: true
             },
             minimal: {
                 borderWidth: 1,
