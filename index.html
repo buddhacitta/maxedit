@@ -124,146 +124,261 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <canvas id="canvas"></canvas>
-        
-        <!-- Text Editor -->
-        <div class="text-editor" id="textEditor" style="display: none;">
-            <div class="text-input-container">
-                <textarea id="textInput" placeholder="Enter your text here... Press Enter for new lines. Text will auto-wrap when lines get too long."></textarea>
-                <div class="text-controls">
-                    <button class="text-btn" id="textBold"><i class="fas fa-bold"></i></button>
-                    <button class="text-btn" id="textItalic"><i class="fas fa-italic"></i></button>
-                    <button class="text-btn" id="textUnderline"><i class="fas fa-underline"></i></button>
-                    <input type="color" id="textColor" value="#ffffff" title="Text Color">
-                    <div style="position: relative; display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="range" id="textSize" min="12" max="72" value="48" title="Font Size">
-                        <span id="fontSizeDisplay" class="font-size-display">48px</span>
+    <!-- Main Editor Container -->
+    <div class="editor-container">
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <canvas id="canvas"></canvas>
+            
+            <!-- Text Editor -->
+            <div class="text-editor" id="textEditor" style="display: none;">
+                <div class="text-input-container">
+                    <textarea id="textInput" placeholder="Enter your text here... Press Enter for new lines. Text will auto-wrap when lines get too long."></textarea>
+                    <div class="text-controls">
+                        <button class="text-btn" id="textBold"><i class="fas fa-bold"></i></button>
+                        <button class="text-btn" id="textItalic"><i class="fas fa-italic"></i></button>
+                        <button class="text-btn" id="textUnderline"><i class="fas fa-underline"></i></button>
+                        <input type="color" id="textColor" value="#ffffff" title="Text Color">
+                        <div style="position: relative; display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="range" id="textSize" min="12" max="72" value="48" title="Font Size">
+                            <span id="fontSizeDisplay" class="font-size-display">48px</span>
+                        </div>
+                        <button class="text-btn primary" id="addTextToCanvas">Add Text</button>
+                        <button class="text-btn cancel" id="cancelText">Cancel</button>
                     </div>
-                    <button class="text-btn primary" id="addTextToCanvas">Add Text</button>
-                    <button class="text-btn cancel" id="cancelText">Cancel</button>
                 </div>
             </div>
-        </div>
-        
-        <!-- Text Editor -->
-        <div class="text-editor" id="textEditor" style="display: none;">
-            <div class="text-input-container">
-                <textarea id="textInput" placeholder="Enter your text here..."></textarea>
-                <div class="text-controls">
-                    <button class="text-btn" id="textBold"><i class="fas fa-bold"></i></button>
-                    <button class="text-btn" id="textItalic"><i class="fas fa-italic"></i></button>
-                    <button class="text-btn" id="textUnderline"><i class="fas fa-underline"></i></button>
-                    <input type="color" id="textColor" value="#ffffff" title="Text Color">
-                    <input type="range" id="textSize" min="12" max="72" value="24" title="Font Size">
-                    <button class="text-btn primary" id="addTextToCanvas">Add Text</button>
-                    <button class="text-btn cancel" id="cancelText">Cancel</button>
-                </div>
+            
+            <!-- Canvas Size Indicator -->
+            <div class="canvas-info" id="canvasInfo">
+                <span class="canvas-size">1080 × 1080</span>
+                <span class="canvas-ratio">1:1</span>
             </div>
         </div>
-        
-        <!-- Object Properties Panel -->
-        <div class="properties-panel" id="propertiesPanel" style="display: none;">
+
+        <!-- Right Control Panel -->
+        <div class="control-panel" id="controlPanel">
             <div class="panel-header">
-                <h3>Object Properties</h3>
-                <button class="panel-close" id="panelClose">
-                    <i class="fas fa-times"></i>
+                <h3>Editor Controls</h3>
+                <button class="panel-toggle" id="panelToggle">
+                    <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
+            
             <div class="panel-content">
-                <div class="property-section">
-                    <h4>Transform</h4>
-                    <div class="property-group">
-                        <label>Position X</label>
-                        <input type="range" id="posX" min="-10" max="10" step="0.1" value="0">
-                        <span id="posXValue">0</span>
+                <!-- Basic Tools Section -->
+                <div class="tool-section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-tools"></i> Basic Tools</h4>
+                        <button class="section-toggle active" data-section="basic">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
                     </div>
-                    <div class="property-group">
-                        <label>Position Y</label>
-                        <input type="range" id="posY" min="-10" max="10" step="0.1" value="0">
-                        <span id="posYValue">0</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Position Z</label>
-                        <input type="range" id="posZ" min="-10" max="10" step="0.1" value="0">
-                        <span id="posZValue">0</span>
-                    </div>
-                </div>
-                
-                <div class="property-section">
-                    <h4>Scale</h4>
-                    <div class="property-group">
-                        <label>Scale X</label>
-                        <input type="range" id="scaleX" min="0.1" max="1.6" step="0.01" value="1">
-                        <span id="scaleXValue">100%</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Scale Y</label>
-                        <input type="range" id="scaleY" min="0.1" max="1.6" step="0.01" value="1">
-                        <span id="scaleYValue">100%</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Scale Z</label>
-                        <input type="range" id="scaleZ" min="0.1" max="1.6" step="0.01" value="1">
-                        <span id="scaleZValue">100%</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Uniform Scale</label>
-                        <input type="range" id="uniformScale" min="0.1" max="1.6" step="0.01" value="1">
-                        <span id="uniformScaleValue">100%</span>
-                    </div>
-                </div>
-                
-                <div class="property-section">
-                    <h4>Rotation</h4>
-                    <div class="property-group">
-                        <label>Rotation X</label>
-                        <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
-                        <span id="rotXValue">0°</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Rotation Y</label>
-                        <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
-                        <span id="rotYValue">0°</span>
-                    </div>
-                    <div class="property-group">
-                        <label>Rotation Z</label>
-                        <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
-                        <span id="rotZValue">0°</span>
+                    <div class="section-content" id="basicTools">
+                        <div class="tool-group">
+                            <label>Quick Actions</label>
+                            <div class="button-grid">
+                                <button class="tool-btn" id="addCube">
+                                    <i class="fas fa-cube"></i>
+                                    <span>Add Cube</span>
+                                </button>
+                                <button class="tool-btn" id="addSphere">
+                                    <i class="fas fa-circle"></i>
+                                    <span>Add Sphere</span>
+                                </button>
+                                <button class="tool-btn" id="addText">
+                                    <i class="fas fa-font"></i>
+                                    <span>Add Text</span>
+                                </button>
+                                <button class="tool-btn" id="clearAll">
+                                    <i class="fas fa-trash"></i>
+                                    <span>Clear All</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Canvas Size</label>
+                            <div class="canvas-size-controls">
+                                <div class="size-input-group">
+                                    <input type="number" id="canvasWidth" min="100" max="8000" value="1080" placeholder="Width">
+                                    <span>×</span>
+                                    <input type="number" id="canvasHeight" min="100" max="8000" value="1080" placeholder="Height">
+                                </div>
+                                <button class="apply-btn" id="applyCanvasSize">Apply Size</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Background</label>
+                            <div class="background-controls">
+                                <input type="color" id="backgroundColor" value="#000000" title="Background Color">
+                                <button class="tool-btn-small" id="resetBackground">Reset</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="property-section">
-                    <h4>Material</h4>
-                    <div class="property-group">
-                        <label>Opacity</label>
-                        <input type="range" id="opacity" min="0" max="1" step="0.01" value="1">
-                        <span id="opacityValue">100%</span>
+
+                <!-- Advanced Tools Section -->
+                <div class="tool-section">
+                    <div class="section-header">
+                        <h4><i class="fas fa-cogs"></i> Advanced Tools</h4>
+                        <button class="section-toggle" data-section="advanced">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-                    <div class="property-group">
-                        <label>Color</label>
-                        <input type="color" id="objectColor" value="#ffffff">
+                    <div class="section-content collapsed" id="advancedTools">
+                        <div class="tool-group">
+                            <label>Lighting</label>
+                            <div class="property-group">
+                                <label>Ambient Light</label>
+                                <input type="range" id="ambientLight" min="0" max="1" step="0.1" value="0.6">
+                                <span id="ambientLightValue">60%</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Directional Light</label>
+                                <input type="range" id="directionalLight" min="0" max="2" step="0.1" value="0.8">
+                                <span id="directionalLightValue">80%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Camera Controls</label>
+                            <div class="property-group">
+                                <label>Field of View</label>
+                                <input type="range" id="cameraFov" min="30" max="120" step="5" value="75">
+                                <span id="cameraFovValue">75°</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Camera Distance</label>
+                                <input type="range" id="cameraDistance" min="2" max="10" step="0.5" value="5">
+                                <span id="cameraDistanceValue">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Scene Settings</label>
+                            <div class="property-group">
+                                <label>Grid Opacity</label>
+                                <input type="range" id="gridOpacity" min="0" max="1" step="0.1" value="0.1">
+                                <span id="gridOpacityValue">10%</span>
+                            </div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showGrid" checked>
+                                    <span class="checkmark"></span>
+                                    Show Grid
+                                </label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showParticles" checked>
+                                    <span class="checkmark"></span>
+                                    Show Particles
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="property-actions">
-                    <button class="action-btn duplicate" id="duplicateSelected">
-                        <i class="fas fa-copy"></i>
-                        Duplicate
-                    </button>
-                    <button class="action-btn delete" id="deleteSelected">
-                        <i class="fas fa-trash"></i>
-                        Delete
-                    </button>
+
+                <!-- Object Properties Section (shown when object is selected) -->
+                <div class="tool-section" id="objectPropertiesSection" style="display: none;">
+                    <div class="section-header">
+                        <h4><i class="fas fa-cube"></i> Object Properties</h4>
+                        <button class="section-toggle active" data-section="properties">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="section-content" id="objectProperties">
+                        <div class="tool-group">
+                            <label>Transform</label>
+                            <div class="property-group">
+                                <label>Position X</label>
+                                <input type="range" id="posX" min="-10" max="10" step="0.1" value="0">
+                                <span id="posXValue">0</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Position Y</label>
+                                <input type="range" id="posY" min="-10" max="10" step="0.1" value="0">
+                                <span id="posYValue">0</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Position Z</label>
+                                <input type="range" id="posZ" min="-10" max="10" step="0.1" value="0">
+                                <span id="posZValue">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Scale</label>
+                            <div class="property-group">
+                                <label>Uniform Scale</label>
+                                <input type="range" id="uniformScale" min="0.1" max="3" step="0.01" value="1">
+                                <span id="uniformScaleValue">100%</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Scale X</label>
+                                <input type="range" id="scaleX" min="0.1" max="3" step="0.01" value="1">
+                                <span id="scaleXValue">100%</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Scale Y</label>
+                                <input type="range" id="scaleY" min="0.1" max="3" step="0.01" value="1">
+                                <span id="scaleYValue">100%</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Scale Z</label>
+                                <input type="range" id="scaleZ" min="0.1" max="3" step="0.01" value="1">
+                                <span id="scaleZValue">100%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Rotation</label>
+                            <div class="property-group">
+                                <label>Rotation X</label>
+                                <input type="range" id="rotX" min="-180" max="180" step="1" value="0">
+                                <span id="rotXValue">0°</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Rotation Y</label>
+                                <input type="range" id="rotY" min="-180" max="180" step="1" value="0">
+                                <span id="rotYValue">0°</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Rotation Z</label>
+                                <input type="range" id="rotZ" min="-180" max="180" step="1" value="0">
+                                <span id="rotZValue">0°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Material</label>
+                            <div class="property-group">
+                                <label>Opacity</label>
+                                <input type="range" id="opacity" min="0" max="1" step="0.01" value="1">
+                                <span id="opacityValue">100%</span>
+                            </div>
+                            <div class="property-group">
+                                <label>Color</label>
+                                <input type="color" id="objectColor" value="#ffffff">
+                            </div>
+                        </div>
+                        
+                        <div class="tool-group">
+                            <label>Actions</label>
+                            <div class="button-grid">
+                                <button class="action-btn duplicate" id="duplicateSelected">
+                                    <i class="fas fa-copy"></i>
+                                    <span>Duplicate</span>
+                                </button>
+                                <button class="action-btn delete" id="deleteSelected">
+                                    <i class="fas fa-trash"></i>
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Canvas Size Indicator -->
-        <div class="canvas-info" id="canvasInfo">
-            <span class="canvas-size">1080 × 1080</span>
-            <span class="canvas-ratio">1:1</span>
         </div>
     </div>
 

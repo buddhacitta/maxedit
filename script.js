@@ -63,6 +63,7 @@ const canvasPresets = {
 
 // Global variables
 let scene, camera, renderer, selected = null;
+let ambientLight, directionalLight;
 const objects = [];
 const textObjects = [];
 let isDragging = false;
@@ -121,10 +122,10 @@ function setupThree() {
     camera.position.z = 5;
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(1, 1, 1);
     scene.add(directionalLight);
 
@@ -148,8 +149,9 @@ function updateRendererTheme() {
 // Resize renderer
 function resizeRenderer() {
     if (renderer && camera) {
-        const containerWidth = window.innerWidth;
-        const containerHeight = window.innerHeight - 180; // Account for nav, presets, and toolbar
+        const canvasArea = document.querySelector('.canvas-area');
+        const containerWidth = canvasArea.clientWidth;
+        const containerHeight = canvasArea.clientHeight;
         
         // Calculate canvas size based on aspect ratio
         let canvasWidth, canvasHeight;
@@ -157,11 +159,11 @@ function resizeRenderer() {
         
         if (appState.canvasAspectRatio > containerAspect) {
             // Canvas is wider than container
-            canvasWidth = Math.min(containerWidth * 0.8, containerHeight * 0.8 * appState.canvasAspectRatio);
+            canvasWidth = Math.min(containerWidth * 0.9, containerHeight * 0.9 * appState.canvasAspectRatio);
             canvasHeight = canvasWidth / appState.canvasAspectRatio;
         } else {
             // Canvas is taller than container
-            canvasHeight = Math.min(containerHeight * 0.8, containerWidth * 0.8 / appState.canvasAspectRatio);
+            canvasHeight = Math.min(containerHeight * 0.9, containerWidth * 0.9 / appState.canvasAspectRatio);
             canvasWidth = canvasHeight * appState.canvasAspectRatio;
         }
         
@@ -268,15 +270,13 @@ function onWindowResize() {
 // Object selection
 function selectObject(obj) {
     selected = obj;
-    const panel = document.getElementById('propertiesPanel');
+    const objectPropertiesSection = document.getElementById('objectPropertiesSection');
     
     if (selected) {
-        panel.style.display = 'block';
-        panel.classList.add('fade-in');
+        objectPropertiesSection.style.display = 'block';
         updatePropertyInputs();
     } else {
-        panel.style.display = 'none';
-        panel.classList.remove('fade-in');
+        objectPropertiesSection.style.display = 'none';
     }
 }
 
@@ -738,6 +738,10 @@ function applyCanvasPreset(presetKey) {
     document.getElementById('export-width').value = preset.width;
     document.getElementById('export-height').value = preset.height;
 
+    // Update canvas size inputs in control panel
+    document.getElementById('canvasWidth').value = preset.width;
+    document.getElementById('canvasHeight').value = preset.height;
+
     // Update active preset button
     document.querySelectorAll('.preset-btn, .preset-card').forEach(btn => {
         btn.classList.remove('active');
@@ -749,6 +753,33 @@ function applyCanvasPreset(presetKey) {
     }
 
     showNotification(`Canvas set to ${preset.name} (${preset.width}×${preset.height})`, 'success');
+}
+
+// Apply custom canvas size
+function applyCustomCanvasSize() {
+    const width = parseInt(document.getElementById('canvasWidth').value);
+    const height = parseInt(document.getElementById('canvasHeight').value);
+    
+    if (width < 100 || width > 8000 || height < 100 || height > 8000) {
+        showNotification('Canvas size must be between 100 and 8000 pixels', 'error');
+        return;
+    }
+    
+    appState.canvasWidth = width;
+    appState.canvasHeight = height;
+    appState.canvasAspectRatio = width / height;
+    
+    // Update canvas info display
+    updateCanvasInfo();
+    
+    // Resize renderer to match new aspect ratio
+    resizeRenderer();
+
+    // Update export modal inputs
+    document.getElementById('export-width').value = width;
+    document.getElementById('export-height').value = height;
+
+    showNotification(`Canvas size set to ${width}×${height}`, 'success');
 }
 
 // Update canvas info display
@@ -892,23 +923,74 @@ function closeModal(modalId) {
     document.body.style.overflow = 'auto';
 }
 
+// Panel toggle functionality
+function toggleControlPanel() {
+    const controlPanel = document.getElementById('controlPanel');
+    controlPanel.classList.toggle('collapsed');
+}
+
+// Section toggle functionality
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const toggle = document.querySelector(`[data-section="${sectionId.replace('Tools', '').replace('Properties', 'properties')}"]`);
+    
+    section.classList.toggle('collapsed');
+    toggle.classList.toggle('active');
+}
+
+// Update lighting controls
+function updateLighting() {
+    const ambientValue = parseFloat(document.getElementById('ambientLight').value);
+    const directionalValue = parseFloat(document.getElementById('directionalLight').value);
+    
+    if (ambientLight) ambientLight.intensity = ambientValue;
+    if (directionalLight) directionalLight.intensity = directionalValue;
+    
+    document.getElementById('ambientLightValue').textContent = Math.round(ambientValue * 100) + '%';
+    document.getElementById('directionalLightValue').textContent = Math.round(directionalValue * 100) + '%';
+}
+
+// Update camera controls
+function updateCamera() {
+    const fov = parseFloat(document.getElementById('cameraFov').value);
+    const distance = parseFloat(document.getElementById('cameraDistance').value);
+    
+    if (camera) {
+        camera.fov = fov;
+        camera.position.z = distance;
+        camera.updateProjectionMatrix();
+    }
+    
+    document.getElementById('cameraFovValue').textContent = fov + '°';
+    document.getElementById('cameraDistanceValue').textContent = distance;
+}
+
+// Update scene settings
+function updateSceneSettings() {
+    const gridOpacity = parseFloat(document.getElementById('gridOpacity').value);
+    const showGrid = document.getElementById('showGrid').checked;
+    const showParticles = document.getElementById('showParticles').checked;
+    
+    // Update grid opacity
+    const cyberGrid = document.querySelector('.cyber-grid');
+    if (cyberGrid) {
+        cyberGrid.style.opacity = showGrid ? gridOpacity : 0;
+    }
+    
+    // Update particles visibility
+    const particles = document.querySelector('.particles');
+    if (particles) {
+        particles.style.display = showParticles ? 'block' : 'none';
+    }
+    
+    document.getElementById('gridOpacityValue').textContent = Math.round(gridOpacity * 100) + '%';
+}
+
 // Notification system
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--success-color);
-        color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: var(--shadow-lg);
-        z-index: 10000;
-        animation: slideIn 0.3s ease-out;
-    `;
     
     document.body.appendChild(notification);
     
@@ -982,6 +1064,48 @@ function setupEventListeners() {
     // Theme toggle
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
     
+    // Panel toggle
+    document.getElementById('panelToggle').addEventListener('click', toggleControlPanel);
+    
+    // Section toggles
+    document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const sectionId = header.nextElementSibling.id;
+            toggleSection(sectionId);
+        });
+    });
+    
+    // Basic tool buttons
+    document.getElementById('addCube').addEventListener('click', () => addShape('cube'));
+    document.getElementById('addSphere').addEventListener('click', () => addShape('sphere'));
+    document.getElementById('addText').addEventListener('click', () => showTextEditor());
+    document.getElementById('clearAll').addEventListener('click', clearScene);
+    
+    // Canvas size controls
+    document.getElementById('applyCanvasSize').addEventListener('click', applyCustomCanvasSize);
+    
+    // Background controls
+    document.getElementById('backgroundColor').addEventListener('input', (e) => {
+        const color = e.target.value;
+        if (renderer) {
+            renderer.setClearColor(color);
+        }
+    });
+    
+    document.getElementById('resetBackground').addEventListener('click', () => {
+        updateRendererTheme();
+        document.getElementById('backgroundColor').value = appState.theme === 'dark' ? '#000000' : '#ffffff';
+    });
+    
+    // Advanced controls
+    document.getElementById('ambientLight').addEventListener('input', updateLighting);
+    document.getElementById('directionalLight').addEventListener('input', updateLighting);
+    document.getElementById('cameraFov').addEventListener('input', updateCamera);
+    document.getElementById('cameraDistance').addEventListener('input', updateCamera);
+    document.getElementById('gridOpacity').addEventListener('input', updateSceneSettings);
+    document.getElementById('showGrid').addEventListener('change', updateSceneSettings);
+    document.getElementById('showParticles').addEventListener('change', updateSceneSettings);
+    
     // Toolbar items
     document.querySelectorAll('.toolbar-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -1024,11 +1148,6 @@ function setupEventListeners() {
         if (input) {
             input.addEventListener('input', updateSelectedObject);
         }
-    });
-    
-    // Panel close button
-    document.getElementById('panelClose').addEventListener('click', () => {
-        selectObject(null);
     });
     
     // Duplicate button
@@ -1144,7 +1263,8 @@ function setupEventListeners() {
         if (currentTextMesh) updateTextPreview();
     });
 
-    document.getElementById('textSize').addEventListener('input', () => {
+    document.getElementById('textSize').addEventListener('input', (e) => {
+        document.getElementById('fontSizeDisplay').textContent = e.target.value + 'px';
         if (currentTextMesh) updateTextPreview();
     });
     
@@ -1239,6 +1359,11 @@ function setupEventListeners() {
 document.addEventListener('DOMContentLoaded', () => {
     init();
     updateCanvasInfo();
+    
+    // Initialize control values
+    updateLighting();
+    updateCamera();
+    updateSceneSettings();
 });
 
 // Handle page visibility change
